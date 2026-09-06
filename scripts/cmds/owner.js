@@ -27,7 +27,7 @@ module.exports = {
 ├─ 🔗 Cᴏɴᴛᴀᴄᴛ ─╮
 │ 📘 Facebook  : 𝐰𝐰𝐰:/𝐌𝐞𝐡𝐞𝐝𝐢.𝐂𝐡𝐨𝐰𝐝𝐡𝐮𝐫𝐲
 │ 💬 Messenger : 𝐅𝐚𝐜𝐞𝐛𝐨𝐨𝐤:/𝐌𝐞𝐡𝐞𝐝𝐢.𝐊𝐡𝐚𝐧
-│ 📞 WhatsApp  : 𝐰𝐡𝐚𝐭:/01408320931
+│ 📞 WhatsApp  : 𝐰𝐡𝐚𝐭:/01408528939
 ╰────────────────╯`;
 
     const videoLink = "https://files.catbox.moe/5a1a1n.mp4";
