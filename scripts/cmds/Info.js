@@ -23,7 +23,7 @@ module.exports = {
     const ownerName = "ᴍᴀɪsʜᴀ";
     const ownerAge = "22+";
     const ownerFB = "আ্ঁসো্ঁ ক্ঁট্ঁ খা্ঁই্ঁ🥵⎯⃝💦⎯⃝🤧⎯⃝🤭 ধ্ঁরা্ঁ প্ঁড়্ঁলে্ঁ-)সোনা 🤌(-𝙅𝙖𝙢𝙖𝙞•|•𝘽𝙤𝙬⎯͢⎯⃝🩵☺️🐰";
-    const ownerNumber = "8801408320931";
+    const ownerNumber = "8801458328939";
     const status = "𝐒𝐢𝐥𝐞𝐧𝐜𝐞 𝐢𝐬 𝐌𝐲 𝐀𝐭𝐭𝐢𝐭𝐮𝐝𝐞";
 
     const botName = "ᴍᴇʜᴇᴅɪ ᴋʜᴀɴ";
