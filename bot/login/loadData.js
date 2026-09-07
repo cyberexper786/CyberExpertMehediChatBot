@@ -2,14 +2,13 @@ const chalk = require('chalk');
 const path = require('path');
 const { log, createOraDots, getText } = global.utils;
 
-// Updated Big Text Header
 const bigText = `
-██╗░░██╗██████╗░██╗██████╗░░█████╗░██╗░░░██╗
-██║░░██║██╔══██╗██║██╔══██╗██╔══██╗╚██╗░██╔╝
-███████║██████╔╝██║██║░░██║██║░░██║░╚████╔╝░
-██╔══██║██╔══██╗██║██║░░██║██║░░██║░░╚██╔╝░░
-██║░░██║██║░░██║██║██████╔╝╚█████╔╝░░░██║░░░
-╚═╝░░╚═╝╚═╝░░╚═╝╚═╝╚═════╝░░╚════╝░░░░╚═╝░░░`;
+███╗░░░███╗███████╗██╗░░██╗██████╗░██╗
+████╗░████║██╔════╝██║░░██║██╔══██╗██║
+██╔████╔██║█████╗░░███████║██║░░██║██║
+██║╚██╔╝██║██╔══╝░░██╔══██║██║░░██║██║
+██║░╚═╝░██║███████╗██║░░██║██████╔╝██║
+╚═╝░░░░░╚═╝╚══════╝╚═╝░░╚═╝╚═════╝░╚═╝`;
 
 function header(title) {
 	return chalk.cyanBright(
@@ -25,7 +24,6 @@ function line(text) {
 
 module.exports = async function (api, createLine) {
 
-	// HEADER
 	console.log(chalk.green(bigText));
 	console.log(header("🚀 HR ID OY DATABASE"));
 	console.log(line("📦 Loading system resources…"));
@@ -36,7 +34,6 @@ module.exports = async function (api, createLine) {
 	log.info('DATABASE', `🧵 Thread data: OK`);
 	log.info('DATABASE', `👤 User data: OK`);
 
-	// AUTO SYNC
 	if (api && global.GoatBot.config.database.autoSyncWhenStart == true) {
 
 		console.log(header("🔄 AUTO SYNC ENABLED"));
