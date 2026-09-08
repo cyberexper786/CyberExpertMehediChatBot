@@ -33,7 +33,7 @@ module.exports = {
     const imageUrl = images[Math.floor(Math.random() * images.length)];
 
     try {
-      // এটাই ১০০% কাজ করে (পিক + পুরো টেক্সট একসাথে)
+      // এটাই এখন ১০০% কাজ করে (পিক + ক্যাপশন)
       await api.sendPhoto(event.threadID, imageUrl, {
         caption: messageBody,
         parse_mode: "HTML"
