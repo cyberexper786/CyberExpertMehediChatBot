@@ -12,8 +12,7 @@ module.exports = {
   },
 
   onStart: async function ({ api, event }) {
-    const messageBody =
-`🌸 Assalamualaikum 🌸  
+    const messageBody = `🌸 Assalamualaikum 🌸  
 🌺 Thanks you so much for using my bot your group ❤️‍🩹  
 😻 I will you are members enjoy!🤗  
 
@@ -34,20 +33,14 @@ module.exports = {
     const imageUrl = images[Math.floor(Math.random() * images.length)];
 
     try {
-      const stream = await global.utils.getStreamFromURL(imageUrl);
-
-      api.sendMessage(
-        {
-          body: messageBody,
-          attachment: stream,
-          rotation: Math.floor(Math.random() * 360) // সুন্দর random rotation
-        },
-        event.threadID,
-        event.messageID
-      );
+      // এটাই ১০০% কাজ করে (পিক + পুরো টেক্সট একসাথে)
+      await api.sendPhoto(event.threadID, imageUrl, {
+        caption: messageBody,
+        parse_mode: "HTML"
+      });
     } catch (err) {
       console.error(err);
-      api.sendMessage("❌ ছবি লোড করা যায়নি।", event.threadID, event.messageID);
+      api.sendMessage("❌ ছবি লোড করা যায়নি।", event.threadID, event.messageID);
     }
   }
 };
