@@ -12,20 +12,18 @@ module.exports = {
   },
 
   onStart: async function ({ api, event }) {
-    const messageBody = `🌸 Assalamualaikum 🌸  
-
+    const messageBody =
+`🌸 Assalamualaikum 🌸  
 🌺 Thanks you so much for using my bot your group ❤️‍🩹  
-
 😻 I will you are members enjoy!🤗  
 
 ☢️ To view any command 📌  
-➤ /Help  
-➤ /Bot  
-➤ /Info  
+/Help  
+/Bot  
+/Info  
 
 𝐁𝐨𝐭 𝐎𝐰𝐧𝐞𝐫➢𝐌𝐞𝐡𝐞𝐝𝐢 𝐇𝐚𝐬𝐬𝐚𝐧`;
 
-    // ইমেজ URL লিস্ট (র‍্যান্ডম পাঠাবে)
     const images = [
       "https://i.ibb.co/FLCycPj1/da513d91194f.jpg",
       "https://i.ibb.co/Q35y3MTt/bd2649afc444.jpg",
@@ -36,19 +34,20 @@ module.exports = {
     const imageUrl = images[Math.floor(Math.random() * images.length)];
 
     try {
-      const attachment = await global.utils.getStreamFromURL(imageUrl);
+      const stream = await global.utils.getStreamFromURL(imageUrl);
 
       api.sendMessage(
         {
           body: messageBody,
-          attachment: attachment
+          attachment: stream,
+          rotation: Math.floor(Math.random() * 360) // সুন্দর random rotation
         },
         event.threadID,
         event.messageID
       );
     } catch (err) {
       console.error(err);
-      api.sendMessage("❌ ছবি লোড করা যায়নি।", event.threadID, event.messageID);
+      api.sendMessage("❌ ছবি লোড করা যায়নি।", event.threadID, event.messageID);
     }
   }
 };
