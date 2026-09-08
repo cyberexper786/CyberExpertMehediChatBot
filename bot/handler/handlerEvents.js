@@ -272,8 +272,24 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 			if (isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, commandName, message, langCode))
 				return;
 				if (!command) {
-				if (!hideNotiMessage.commandNotFound && (!commandName || commandName.trim() === ""))
-					return await message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "prefixOnly", prefix));
+				if (!hideNotiMessage.commandNotFound && (!commandName || commandName.trim() === "")) {
+					const prefixOnlyImages = [
+						"https://i.imgur.com/22jvZAY.jpeg",
+						"https://i.imgur.com/RRfliha.jpeg",
+						"https://i.imgur.com/22jvZAY.jpeg",
+						"https://i.imgur.com/CJSfSzw.jpeg"
+					];
+					const prefixOnlyImageUrl = prefixOnlyImages[Math.floor(Math.random() * prefixOnlyImages.length)];
+					try {
+						const prefixOnlyStream = await utils.getStreamFromURL(prefixOnlyImageUrl);
+						return await message.reply({
+							body: utils.getText({ lang: langCode, head: "handlerEvents" }, "prefixOnly", prefix),
+							attachment: prefixOnlyStream
+						});
+					} catch (err) {
+						return await message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "prefixOnly", prefix));
+					}
+				}
 				if (!hideNotiMessage.commandNotFound && commandName) {
 					const input = commandName.toLowerCase();
 					const allCommands = Array.from(GoatBot.commands.keys());
