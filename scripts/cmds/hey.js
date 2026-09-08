@@ -1,3 +1,5 @@
+const axios = require("axios");
+
 module.exports = {
   config: {
     name: "hey",
@@ -38,11 +40,11 @@ module.exports = {
 
     for (const url of shuffled) {
       try {
-        const stream = await global.utils.getStreamFromURL(url);
+        const response = await axios.get(url, { responseType: "stream" });
         await api.sendMessage(
           {
             body: messageBody,
-            attachment: stream
+            attachment: [response.data] // 👈 অ্যারে করে দিলাম
           },
           event.threadID,
           event.messageID
@@ -50,7 +52,7 @@ module.exports = {
         sent = true;
         break;
       } catch (err) {
-        console.error(`❌ Image failed: ${url}`, err.message);
+        console.error(`❌ Image failed: ${url}`, err.message); // এই লগ bot console-এ দেখো
         continue;
       }
     }
