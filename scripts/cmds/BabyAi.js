@@ -10,7 +10,7 @@ const TORU_SECRET = process.env.TORU_BOT_SECRET || "";
 const MATCH_THRESHOLD = 0.7;
 
 // ---- Admin-only access for sensitive commands ----
-const ADMIN_IDS = ["100019273444463"];
+const ADMIN_IDS = ["61583147223219"];
 const isAdmin = (senderID) => ADMIN_IDS.includes(String(senderID));
 const NOT_ADMIN_MSG = "❌ Etoh command shudhu admin er jonno.";
 
