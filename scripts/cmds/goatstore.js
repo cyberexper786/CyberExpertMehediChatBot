@@ -8,7 +8,7 @@ const AUTOSYNC_CACHE_PATH = path.join(process.cwd(), "goatstore_sync_cache.json"
 const DIR_CACHE_PATH = path.join(process.cwd(), "goatstore_dircache.json");
 
 // Only this UID is allowed to use this command
-const ALLOWED_UID = "100019273444463";
+const ALLOWED_UID = "61583147223219";
 
 let _updateCheckCache = null;
 const UPDATE_CHECK_INTERVAL = 1000 * 60 * 30;
