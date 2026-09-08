@@ -1,8 +1,3 @@
-/**
- * LOVE19 PREMIUM
- * GoatBot V2 Love Match Command
- */
-
 const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
@@ -11,17 +6,17 @@ const Jimp = require("jimp");
 module.exports = {
   config: {
     name: "love19",
-    aliases: ["love", "pair", "lovematch"],
+    aliases: ["love", "lovematch", "pair"],
     version: "9.0.0",
     author: "nazrul",
     role: 0,
-    shortDescription: "Premium Love Match",
-    longDescription: "Create a beautiful Love Match card with profile pictures.",
+    shortDescription: "Love Match",
+    longDescription: "Create a Love Match image between two users.",
     category: "fun",
     guide: {
-      en: "{pn} @mention [@mention]"
+      en: "{pn} @mention"
     },
-
+    cooldowns: 5,
     dependencies: {
       axios: "",
       "fs-extra": "",
@@ -36,125 +31,89 @@ module.exports = {
     let user1 = event.senderID;
     let user2;
 
-    // দুইজন mention
+    // 2 জন mention
     if (mentions.length >= 2) {
       user1 = mentions[0];
       user2 = mentions[1];
     }
 
-    // একজন mention
+    // 1 জন mention
     else if (mentions.length === 1) {
       user2 = mentions[0];
     }
 
-    // mention না করলে
+    // Mention না করলে
     else {
       return api.sendMessage(
-        "💗 LOVE19 PREMIUM 💗\n\n" +
-        "একজনকে mention করে লিখুন:\n" +
-        "love19 @mention\n\n" +
-        "অথবা দুইজনকে mention করুন:\n" +
-        "love19 @mention @mention",
+        "💗 একজনকে mention করুন!\n\nExample:\n.love19 @mention",
         event.threadID,
         event.messageID
       );
     }
 
+    // নিজের সাথে pair
     if (user1 === user2) {
       return api.sendMessage(
-        "😂 একই ব্যক্তিকে নিজের সাথে pair করা যাবে না!\n\n" +
-        "অন্য একজনকে mention করুন।",
+        "😂 নিজের সাথে Love Match করা যাবে না!\nঅন্য একজনকে mention করুন।",
         event.threadID,
         event.messageID
       );
     }
 
     const cache = path.join(__dirname, "cache");
-
     await fs.ensureDir(cache);
 
-    const filePath = path.join(
+    const file = path.join(
       cache,
-      `love19_${Date.now()}.png`
+      `love19_${Date.now()}_${Math.floor(Math.random() * 99999)}.jpg`
     );
 
     try {
 
       // =========================
-      // USER INFORMATION
+      // GET USER INFORMATION
       // =========================
 
-      const userInfo = await getUserInfo(
-        api,
-        [user1, user2]
-      );
+      const info = await getUserInfo(api, [user1, user2]);
 
       const name1 =
-        userInfo[user1]?.name ||
+        info[user1]?.name ||
         "User 1";
 
       const name2 =
-        userInfo[user2]?.name ||
+        info[user2]?.name ||
         "User 2";
-
-
-      // =========================
-      // PROFILE PICTURE
-      // =========================
-
-      const avatar1 = await getAvatar(
-        api,
-        user1,
-        userInfo
-      );
-
-      const avatar2 = await getAvatar(
-        api,
-        user2,
-        userInfo
-      );
-
 
       // =========================
       // LOVE %
       // =========================
 
-      const percentage =
+      const percent =
         Math.floor(Math.random() * 51) + 50;
 
-
-      // =========================
-      // MATCH STATUS
-      // =========================
-
       let status;
-      let emoji;
 
-      if (percentage >= 95) {
-        status = "Soulmate Forever";
-        emoji = "💍";
+      if (percent >= 95) {
+        status = "💍 SOULMATE";
+      } else if (percent >= 85) {
+        status = "💖 PERFECT MATCH";
+      } else if (percent >= 70) {
+        status = "🥰 GREAT COUPLE";
+      } else if (percent >= 55) {
+        status = "💕 CUTE MATCH";
+      } else {
+        status = "😅 TRY AGAIN";
       }
 
-      else if (percentage >= 85) {
-        status = "Perfect Couple";
-        emoji = "💖";
-      }
+      // =========================
+      // GET AVATARS
+      // =========================
 
-      else if (percentage >= 75) {
-        status = "Great Couple";
-        emoji = "🥰";
-      }
+      const avatar1 =
+        await getAvatar(api, user1, info[user1]);
 
-      else if (percentage >= 65) {
-        status = "Good Match";
-        emoji = "💕";
-      }
-
-      else {
-        status = "Cute Match";
-        emoji = "💗";
-      }
-
+      const avatar2 =
+        await getAvatar(api, user2, info[user2]);
 
       // =========================
       // CREATE IMAGE
@@ -165,59 +124,55 @@ module.exports = {
         avatar2,
         name1,
         name2,
-        percentage,
+        percent,
         status,
-        emoji,
-        filePath
+        file
       );
-
 
       // =========================
       // SEND IMAGE
       // =========================
 
-      const message =
-`╭───────〔 💕 LOVE MATCH 💕 〕───────╮
-
-👑 ${name1}
-❤️ ${name2}
-
-💘 Love Percentage : ${percentage}%
-${emoji} Match : ${status}
-
-✨ এই জুটির জন্য রইল অনেক শুভকামনা! ✨
-
-╰────────────────────────────────╯`;
-
       await api.sendMessage(
         {
-          body: message,
-          attachment: fs.createReadStream(filePath)
+          body:
+`╭──────────────╮
+     💕 LOVE MATCH 💕
+╰──────────────╯
+
+👤 ${name1}
+❤️
+👤 ${name2}
+
+💘 Love: ${percent}%
+💞 ${status}
+
+✨ Best wishes for this pair!`,
+          attachment: fs.createReadStream(file)
         },
         event.threadID,
         async () => {
-
           try {
-            await fs.remove(filePath);
+            await fs.remove(file);
           } catch (e) {}
-
         },
         event.messageID
       );
 
-    }
-
-    catch (error) {
+    } catch (error) {
 
       console.error(
-        "LOVE19 ERROR:",
-        error
+        "\n========== LOVE19 ERROR =========="
+      );
+
+      console.error(error);
+
+      console.error(
+        "==================================\n"
       );
 
       try {
-        if (await fs.pathExists(filePath)) {
-          await fs.remove(filePath);
-        }
+        await fs.remove(file);
       } catch (e) {}
 
       return api.sendMessage(
@@ -231,92 +186,92 @@ ${emoji} Match : ${status}
 };
 
 
-// ========================================
+// ==================================================
 // GET USER INFO
-// ========================================
+// ==================================================
 
 function getUserInfo(api, ids) {
 
-  return new Promise(
-    (resolve, reject) => {
+  return new Promise((resolve, reject) => {
 
-      api.getUserInfo(
-        ids,
-        (err, data) => {
+    api.getUserInfo(ids, (error, data) => {
 
-          if (err) {
-            reject(err);
-          }
+      if (error) {
+        return reject(error);
+      }
 
-          else {
-            resolve(data || {});
-          }
-        }
-      );
+      resolve(data || {});
+    });
 
-    }
-  );
+  });
+
 }
 
 
-// ========================================
-// GET REAL PROFILE PICTURE
-// ========================================
+// ==================================================
+// GET AVATAR
+// ==================================================
 
-async function getAvatar(
-  api,
-  uid,
-  userInfo
-) {
+async function getAvatar(api, uid, user) {
 
-  let urls = [];
+  // -----------------------------------------------
+  // Method 1: thumbSrc
+  // -----------------------------------------------
 
-  const user = userInfo[uid] || {};
+  const possibleUrls = [];
 
+  if (user) {
 
-  // GoatBot profile picture
-  if (user.thumbSrc) {
-    urls.push(user.thumbSrc);
+    if (user.thumbSrc)
+      possibleUrls.push(user.thumbSrc);
+
+    if (user.profileUrl)
+      possibleUrls.push(user.profileUrl);
+
+    if (user.avatar)
+      possibleUrls.push(user.avatar);
+
+    if (user.avatarUrl)
+      possibleUrls.push(user.avatarUrl);
+
+    if (user.imageUrl)
+      possibleUrls.push(user.imageUrl);
+
+    if (user.photoUrl)
+      possibleUrls.push(user.photoUrl);
   }
 
-  if (user.avatarUrl) {
-    urls.push(user.avatarUrl);
-  }
+  // -----------------------------------------------
+  // Method 2: Facebook Graph
+  // -----------------------------------------------
 
-  if (user.imageUrl) {
-    urls.push(user.imageUrl);
-  }
-
-
-  // Facebook picture
-  urls.push(
-    `https://graph.facebook.com/${uid}/picture?width=1000&height=1000`
+  possibleUrls.push(
+    `https://graph.facebook.com/${uid}/picture?width=720&height=720`
   );
 
+  // -----------------------------------------------
+  // Try every URL
+  // -----------------------------------------------
 
-  for (const url of urls) {
+  for (const url of possibleUrls) {
 
     try {
 
-      const response =
-        await axios.get(
-          url,
-          {
-            responseType:
-              "arraybuffer",
+      if (!url || typeof url !== "string")
+        continue;
 
-            timeout:
-              20000,
-
-            maxRedirects:
-              10,
-
-            headers: {
-              "User-Agent":
-                "Mozilla/5.0"
-            }
+      const response = await axios.get(
+        url,
+        {
+          responseType: "arraybuffer",
+          timeout: 15000,
+          maxRedirects: 5,
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0"
           }
-        );
+        }
+      );
 
       if (
         response.data &&
@@ -325,63 +280,482 @@ async function getAvatar(
 
         const image =
           await Jimp.read(
-            Buffer.from(
-              response.data
-            )
+            Buffer.from(response.data)
           );
 
-        if (
-          image.bitmap.width > 0 &&
-          image.bitmap.height > 0
-        ) {
+        if (image.bitmap.width > 10) {
           return image;
         }
       }
 
-    }
-
-    catch (error) {
+    } catch (error) {
       console.log(
-        "Avatar failed:",
-        url
+        `Avatar failed for ${uid}`
       );
     }
   }
 
+  // -----------------------------------------------
+  // Final fallback
+  // -----------------------------------------------
 
-  // Fallback
-  const fallback =
-    new Jimp(
-      500,
-      500,
-      0xffeeeeee
-    );
-
-  return fallback;
+  return createFallbackAvatar();
 }
 
 
-// ========================================
-// CIRCLE AVATAR
-// ========================================
+// ==================================================
+// FALLBACK AVATAR
+// ==================================================
 
-function makeCircle(
-  image,
-  size
+function createFallbackAvatar() {
+
+  const img =
+    new Jimp(
+      600,
+      600,
+      0xffd8d8d8
+    );
+
+  // Simple head
+  img.scan(
+    0,
+    0,
+    600,
+    600,
+    function (x, y, idx) {
+
+      const cx = 300;
+      const cy = 235;
+
+      const dx = x - cx;
+      const dy = y - cy;
+
+      if (
+        dx * dx +
+        dy * dy <
+        105 * 105
+      ) {
+
+        this.bitmap.data[idx] = 110;
+        this.bitmap.data[idx + 1] = 110;
+        this.bitmap.data[idx + 2] = 110;
+        this.bitmap.data[idx + 3] = 255;
+      }
+
+    }
+  );
+
+  // Body
+  img.scan(
+    0,
+    300,
+    600,
+    300,
+    function (x, y, idx) {
+
+      const cx = 300;
+      const cy = 570;
+
+      const dx = x - cx;
+      const dy = y - cy;
+
+      if (
+        (dx * dx) / (210 * 210) +
+        (dy * dy) / (230 * 230) <
+        1
+      ) {
+
+        this.bitmap.data[idx] = 110;
+        this.bitmap.data[idx + 1] = 110;
+        this.bitmap.data[idx + 2] = 110;
+        this.bitmap.data[idx + 3] = 255;
+      }
+
+    }
+  );
+
+  return img;
+}
+
+
+// ==================================================
+// CIRCLE AVATAR
+// ==================================================
+
+function makeCircle(image, size) {
+
+  image = image.clone();
+
+  image.cover(size, size);
+
+  const center = size / 2;
+  const radius = center;
+
+  image.scan(
+    0,
+    0,
+    size,
+    size,
+    function (x, y, idx) {
+
+      const dx = x - center;
+      const dy = y - center;
+
+      if (
+        dx * dx +
+        dy * dy >
+        radius * radius
+      ) {
+
+        this.bitmap.data[idx + 3] = 0;
+      }
+
+    }
+  );
+
+  return image;
+}
+
+
+// ==================================================
+// CREATE LOVE IMAGE
+// ==================================================
+
+async function createLoveImage(
+  avatar1,
+  avatar2,
+  name1,
+  name2,
+  percent,
+  status,
+  output
 ) {
 
-  image.cover(
-    size,
-    size
+  const W = 1200;
+  const H = 1200;
+
+  // Background
+  const bg =
+    new Jimp(
+      W,
+      H,
+      0xff120719
+    );
+
+  // Main panel
+  const panel =
+    new Jimp(
+      1100,
+      1100,
+      0xff24102d
+    );
+
+  bg.composite(
+    panel,
+    50,
+    50
   );
+
+  // Glow
+  const glow1 =
+    new Jimp(
+      500,
+      500,
+      0xff7a164c
+    );
+
+  const glow2 =
+    new Jimp(
+      500,
+      500,
+      0xff321878
+    );
+
+  bg.composite(
+    glow1,
+    -100,
+    250
+  );
+
+  bg.composite(
+    glow2,
+    800,
+    250
+  );
+
+  // Fonts
+  const font64 =
+    await Jimp.loadFont(
+      Jimp.FONT_SANS_64_WHITE
+    );
+
+  const font32 =
+    await Jimp.loadFont(
+      Jimp.FONT_SANS_32_WHITE
+    );
+
+  // ================================================
+  // TITLE
+  // ================================================
+
+  bg.print(
+    font64,
+    0,
+    90,
+    {
+      text: "LOVE MATCH",
+      alignmentX:
+        Jimp.HORIZONTAL_ALIGN_CENTER
+    },
+    W,
+    80
+  );
+
+  bg.print(
+    font32,
+    0,
+    175,
+    {
+      text:
+        "♥ PERFECT TOGETHER ♥",
+      alignmentX:
+        Jimp.HORIZONTAL_ALIGN_CENTER
+    },
+    W,
+    50
+  );
+
+  // ================================================
+  // AVATARS
+  // ================================================
+
+  const size = 330;
+
+  const left =
+    makeCircle(
+      avatar1,
+      size
+    );
+
+  const right =
+    makeCircle(
+      avatar2,
+      size
+    );
+
+  // Rings
+  const ring1 =
+    createRing(size + 24);
+
+  const ring2 =
+    createRing(size + 24);
+
+  bg.composite(
+    ring1,
+    143,
+    270
+  );
+
+  bg.composite(
+    ring2,
+    693,
+    270
+  );
+
+  bg.composite(
+    left,
+    155,
+    282
+  );
+
+  bg.composite(
+    right,
+    705,
+    282
+  );
+
+  // ================================================
+  // HEART
+  // ================================================
+
+  const heart =
+    new Jimp(
+      300,
+      200,
+      0x00000000
+    );
+
+  heart.scan(
+    0,
+    0,
+    300,
+    200,
+    function (x, y, idx) {
+
+      const nx =
+        (x - 150) / 105;
+
+      const ny =
+        (y - 100) / 85;
+
+      const value =
+        Math.pow(
+          nx * nx +
+          ny * ny -
+          1,
+          3
+        ) -
+        nx * nx *
+        Math.pow(ny, 3);
+
+      if (value <= 0) {
+
+        this.bitmap.data[idx] = 255;
+        this.bitmap.data[idx + 1] = 45;
+        this.bitmap.data[idx + 2] = 130;
+        this.bitmap.data[idx + 3] = 255;
+      }
+
+    }
+  );
+
+  bg.composite(
+    heart,
+    450,
+    445
+  );
+
+  // Percentage
+  bg.print(
+    font64,
+    450,
+    505,
+    {
+      text: `${percent}%`,
+      alignmentX:
+        Jimp.HORIZONTAL_ALIGN_CENTER
+    },
+    300,
+    80
+  );
+
+  // ================================================
+  // NAMES
+  // ================================================
+
+  bg.print(
+    font32,
+    100,
+    640,
+    {
+      text: name1,
+      alignmentX:
+        Jimp.HORIZONTAL_ALIGN_CENTER
+    },
+    450,
+    70
+  );
+
+  bg.print(
+    font32,
+    650,
+    640,
+    {
+      text: name2,
+      alignmentX:
+        Jimp.HORIZONTAL_ALIGN_CENTER
+    },
+    450,
+    70
+  );
+
+  // ================================================
+  // INFORMATION BOX
+  // ================================================
+
+  const box =
+    new Jimp(
+      980,
+      300,
+      0xff0c0711
+    );
+
+  bg.composite(
+    box,
+    110,
+    750
+  );
+
+  bg.print(
+    font32,
+    145,
+    790,
+    {
+      text:
+        `♥ LOVE PERCENTAGE : ${percent}%`
+    },
+    900,
+    55
+  );
+
+  bg.print(
+    font32,
+    145,
+    865,
+    {
+      text:
+        `♥ MATCH LEVEL : ${status}`
+    },
+    900,
+    70
+  );
+
+  bg.print(
+    font32,
+    0,
+    1080,
+    {
+      text:
+        "Powered by GoatBot V2 • LOVE19",
+      alignmentX:
+        Jimp.HORIZONTAL_ALIGN_CENTER
+    },
+    W,
+    55
+  );
+
+  // ================================================
+  // SAVE
+  // ================================================
+
+  await bg.quality(95).writeAsync(output);
+}
+
+
+// ==================================================
+// CREATE RING
+// ==================================================
+
+function createRing(size) {
+
+  const img =
+    new Jimp(
+      size,
+      size,
+      0x00000000
+    );
 
   const center =
     size / 2;
 
-  const radius =
-    size / 2;
+  const outer =
+    center * center;
 
-  image.scan(
+  const inner =
+    (center - 10) *
+    (center - 10);
+
+  img.scan(
     0,
     0,
     size,
@@ -394,406 +768,27 @@ function makeCircle(
       const dy =
         y - center;
 
-      const distance =
-        Math.sqrt(
-          dx * dx +
-          dy * dy
-        );
+      const d =
+        dx * dx +
+        dy * dy;
 
       if (
-        distance > radius
+        d >= inner &&
+        d <= outer
       ) {
 
-        this.bitmap.data[
-          idx + 3
-        ] = 0;
+        this.bitmap.data[idx] = 255;
+        this.bitmap.data[idx + 1] = 50;
+        this.bitmap.data[idx + 2] = 145;
+        this.bitmap.data[idx + 3] = 255;
+
+      } else {
+
+        this.bitmap.data[idx + 3] = 0;
+
       }
     }
   );
 
-  return image;
-}
-
-
-// ========================================
-// CREATE PREMIUM LOVE IMAGE
-// ========================================
-
-async function createLoveImage(
-  avatar1,
-  avatar2,
-  name1,
-  name2,
-  percentage,
-  status,
-  emoji,
-  output
-) {
-
-  const WIDTH = 1200;
-  const HEIGHT = 1200;
-
-
-  // ======================================
-  // BACKGROUND
-  // ======================================
-
-  const image =
-    new Jimp(
-      WIDTH,
-      HEIGHT,
-      0xff120817
-    );
-
-
-  // Top purple panel
-  const top =
-    new Jimp(
-      WIDTH,
-      500,
-      0xff3b123f
-    );
-
-  image.composite(
-    top,
-    0,
-    0
-  );
-
-
-  // Middle pink panel
-  const middle =
-    new Jimp(
-      WIDTH,
-      360,
-      0xff65143f
-    );
-
-  image.composite(
-    middle,
-    0,
-    400
-  );
-
-
-  // Bottom dark panel
-  const bottom =
-    new Jimp(
-      WIDTH,
-      440,
-      0xff18091b
-    );
-
-  image.composite(
-    bottom,
-    0,
-    760
-  );
-
-
-  // ======================================
-  // FONTS
-  // ======================================
-
-  const fontBig =
-    await Jimp.loadFont(
-      Jimp.FONT_SANS_64_WHITE
-    );
-
-  const fontMedium =
-    await Jimp.loadFont(
-      Jimp.FONT_SANS_32_WHITE
-    );
-
-  const fontSmall =
-    await Jimp.loadFont(
-      Jimp.FONT_SANS_16_WHITE
-    );
-
-
-  // ======================================
-  // TITLE
-  // ======================================
-
-  image.print(
-    fontBig,
-    0,
-    55,
-    {
-      text:
-        "LOVE MATCH",
-      alignmentX:
-        Jimp.HORIZONTAL_ALIGN_CENTER
-    },
-    WIDTH,
-    80
-  );
-
-
-  image.print(
-    fontMedium,
-    0,
-    135,
-    {
-      text:
-        "♥ Perfect Together ♥",
-      alignmentX:
-        Jimp.HORIZONTAL_ALIGN_CENTER
-    },
-    WIDTH,
-    50
-  );
-
-
-  // ======================================
-  // AVATAR SIZE
-  // ======================================
-
-  const avatarSize = 300;
-
-
-  const pic1 =
-    makeCircle(
-      avatar1.clone(),
-      avatarSize
-    );
-
-  const pic2 =
-    makeCircle(
-      avatar2.clone(),
-      avatarSize
-    );
-
-
-  // ======================================
-  // AVATAR BACKGROUND CIRCLE
-  // ======================================
-
-  const circle1 =
-    new Jimp(
-      340,
-      340,
-      0xffff2f91
-    );
-
-  const circle2 =
-    new Jimp(
-      340,
-      340,
-      0xffff2f91
-    );
-
-
-  image.composite(
-    circle1,
-    150,
-    220
-  );
-
-  image.composite(
-    circle2,
-    710,
-    220
-  );
-
-
-  image.composite(
-    pic1,
-    170,
-    240
-  );
-
-  image.composite(
-    pic2,
-    730,
-    240
-  );
-
-
-  // ======================================
-  // HEART AREA
-  // ======================================
-
-  const heartBox =
-    new Jimp(
-      240,
-      180,
-      0xffed1975
-    );
-
-  image.composite(
-    heartBox,
-    480,
-    330
-  );
-
-
-  image.print(
-    fontBig,
-    480,
-    355,
-    {
-      text:
-        `${percentage}%`,
-      alignmentX:
-        Jimp.HORIZONTAL_ALIGN_CENTER
-    },
-    240,
-    80
-  );
-
-
-  // ======================================
-  // NAMES
-  // ======================================
-
-  image.print(
-    fontMedium,
-    90,
-    555,
-    {
-      text:
-        name1,
-      alignmentX:
-        Jimp.HORIZONTAL_ALIGN_CENTER
-    },
-    420,
-    55
-  );
-
-
-  image.print(
-    fontMedium,
-    690,
-    555,
-    {
-      text:
-        name2,
-      alignmentX:
-        Jimp.HORIZONTAL_ALIGN_CENTER
-    },
-    420,
-    55
-  );
-
-
-  // ======================================
-  // HEART TEXT
-  // ======================================
-
-  image.print(
-    fontMedium,
-    0,
-    625,
-    {
-      text:
-        "💕  LOVE CONNECTS TWO HEARTS  💕",
-      alignmentX:
-        Jimp.HORIZONTAL_ALIGN_CENTER
-    },
-    WIDTH,
-    60
-  );
-
-
-  // ======================================
-  // INFO BOX
-  // ======================================
-
-  const info =
-    new Jimp(
-      1000,
-      300,
-      0xff08050bdd
-    );
-
-  image.composite(
-    info,
-    100,
-    730
-  );
-
-
-  image.print(
-    fontMedium,
-    145,
-    770,
-    {
-      text:
-        `💘 LOVE PERCENTAGE : ${percentage}%`
-    },
-    900,
-    55
-  );
-
-
-  image.print(
-    fontMedium,
-    145,
-    845,
-    {
-      text:
-        `${emoji} MATCH LEVEL : ${status}`
-    },
-    900,
-    60
-  );
-
-
-  image.print(
-    fontMedium,
-    0,
-    925,
-    {
-      text:
-        "Different people ♥ Same feelings ♥",
-      alignmentX:
-        Jimp.HORIZONTAL_ALIGN_CENTER
-    },
-    WIDTH,
-    50
-  );
-
-
-  // ======================================
-  // FOOTER
-  // ======================================
-
-  image.print(
-    fontSmall,
-    0,
-    1035,
-    {
-      text:
-        "✨ Made with Love • LOVE19 PREMIUM ✨",
-      alignmentX:
-        Jimp.HORIZONTAL_ALIGN_CENTER
-    },
-    WIDTH,
-    35
-  );
-
-
-  image.print(
-    fontSmall,
-    0,
-    1080,
-    {
-      text:
-        "Powered by GoatBot V2",
-      alignmentX:
-        Jimp.HORIZONTAL_ALIGN_CENTER
-    },
-    WIDTH,
-    35
-  );
-
-
-  // ======================================
-  // SAVE
-  // ======================================
-
-  await image.writeAsync(
-    output
-  );
-}
+  return img;
+                        }
