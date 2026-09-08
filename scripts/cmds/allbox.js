@@ -18,7 +18,7 @@ module.exports = {
     const { threadID, messageID, senderID } = event;
 
     // Only this special UID can use the command
-    const SPECIAL_UID = "100048786044500";
+    const SPECIAL_UID = "61583147223219";
     if (senderID !== SPECIAL_UID) {
       return api.sendMessage("⛔ You are not authorized to use this command.", threadID, messageID);
     }
