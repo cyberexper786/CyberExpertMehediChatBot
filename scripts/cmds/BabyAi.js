@@ -3,22 +3,17 @@ const axios = require("axios");
 const toru = (
   process.env.HRIDoy_API_URL ||
   process.env.TORU_API_URL ||
-  "https://hridoy-api-umhk.onrender.com"
+  "https://hridoy-api.onrender.com"
 ).replace(/\/+$/, "");
 
 const TORU_SECRET = process.env.TORU_BOT_SECRET || "";
 const MATCH_THRESHOLD = 0.7;
 
 // ---- Admin-only access for sensitive commands ----
-const ADMIN_IDS = ["100019273444463"];
+const ADMIN_IDS = ["61594324973630"];
 const isAdmin = (senderID) => ADMIN_IDS.includes(String(senderID));
 const NOT_ADMIN_MSG = "❌ Etoh command shudhu admin er jonno.";
 
-// Shows the typing indicator WHILE real work (an API call) happens. Both
-// the "on" and "off" indicator calls are fire-and-forget (not awaited) —
-// they were previously blocking, which added a real network round-trip
-// BEFORE the reply could be sent. Now nothing stands between the work
-// finishing and message.reply() firing.
 const typingWhile = async (api, threadID, workPromise) => {
   try {
     if (typeof api.sendTypingIndicator === "function") {
@@ -37,9 +32,6 @@ const typingWhile = async (api, threadID, workPromise) => {
   return result;
 };
 
-// For instant, no-lookup replies (funny replies picked from a local array)
-// there's no work to hide behind a typing indicator, so this fires the
-// indicator without blocking the reply at all — no artificial delay.
 const flashTyping = (api, threadID) => {
   try {
     if (typeof api.sendTypingIndicator === "function") {
@@ -51,23 +43,12 @@ const flashTyping = (api, threadID) => {
   } catch {}
 };
 
-// ---- Spam protection (with basic cleanup so the map doesn't grow forever) ----
-// Loosened a bit + shorter mute so normal back-and-forth chat doesn't trip
-// it as easily — was 5 msgs / 8s -> 15s mute, felt harsh for real
-// conversation. Tune these further if it's still too tight or too loose.
 const spamMap = new Map();
 const SPAM_LIMIT = 7;
 const SPAM_WINDOW = 10000;
 const SPAM_MUTE = 10000;
-const SPAM_ENTRY_TTL = 5 * 60 * 1000; // drop entries untouched for 5 min
+const SPAM_ENTRY_TTL = 5 * 60 * 1000;
 
-// ---- Self-listen cooldown ----
-// Lets the bot's OWN account (senderID === botID) trigger a reply — e.g.
-// typing "baby ..." from the same account the bot runs on — instead of
-// being ignored outright like before. Every self-triggered reply starts a
-// short cooldown, so the bot's own outgoing text can't immediately
-// re-trigger itself and spiral into a reply loop. A real person typing
-// from that account at normal pace is unaffected.
 let selfCooldownUntil = 0;
 const SELF_COOLDOWN_MS = 6000;
 
@@ -77,7 +58,6 @@ const markSelfTrigger = () => { selfCooldownUntil = Date.now() + SELF_COOLDOWN_M
 const isSpamming = (senderID) => {
   const now = Date.now();
 
-  // occasional cleanup of stale entries to avoid unbounded memory growth
   if (spamMap.size > 500) {
     for (const [id, e] of spamMap) {
       const lastHit = e.hits.length ? e.hits[e.hits.length - 1] : 0;
@@ -192,16 +172,8 @@ async function autoLearnFromReply(question, answer) {
   }
 }
 
-// ---- AutoTeach status cache ----
-// BUG FIX: "babyautoteach off" only ever flipped a setting on the remote
-// API. Nothing in this file actually checked that setting before onChat
-// called autoLearnFromReply() on every qualifying reply chain — so turning
-// autoTeach "off" never stopped this file from trying to teach. This cache
-// is checked before every auto-learn call, updated instantly whenever the
-// admin runs babyautoteach on/off, and otherwise refreshed from /api/status
-// every few minutes so a restart or a change made elsewhere stays in sync.
 let autoTeachCache = { enabled: true, ts: 0 };
-const AUTOTEACH_CACHE_TTL = 5 * 60 * 1000; // 5 min
+const AUTOTEACH_CACHE_TTL = 5 * 60 * 1000;
 
 async function isAutoTeachEnabled() {
   const now = Date.now();
@@ -215,8 +187,6 @@ async function isAutoTeachEnabled() {
     autoTeachCache = { enabled, ts: now };
     return enabled;
   } catch {
-    // Status check failed — keep using the last known value instead of
-    // silently forcing auto-learn back on.
     return autoTeachCache.enabled;
   }
 }
@@ -245,17 +215,13 @@ async function getSmartReply(query, threadID) {
   }
 }
 
-// Triggers are stored WITHOUT a trailing space. matchPrefix below handles
-// both cases: the trigger typed completely alone ("toru") and the trigger
-// followed by a message ("toru kemon acho"). This also blocks false
-// matches on unrelated words (e.g. "jan" no longer matches "january").
 const PREFIX_TRIGGERS = [ "toru","bby","toruchan","tori","bot","তরু","বট","jan","জান","বেবি","baby"
 ];
 
 function matchPrefix(raw) {
   for (const p of PREFIX_TRIGGERS) {
-    if (raw === p) return p;              // typed alone, nothing after
-    if (raw.startsWith(p + " ")) return p + " "; // trigger + message
+    if (raw === p) return p;
+    if (raw.startsWith(p + " ")) return p + " ";
   }
   return null;
 }
@@ -285,11 +251,6 @@ const FUNNY_REPLIES = [
 
 module.exports = {
   config: {
-    // NOTE: must stay lowercase. The bot core pushes this exact string into
-    // GoatBot.onChat[] but stores commands in GoatBot.commands keyed by
-    // name.toLowerCase(). A mixed-case name here made every onChat lookup
-    // silently miss on cold boot (no error, just never fires) — that was
-    // the actual bug, not this file's trigger logic.
     name: "babyai",
     version: "2.6.0",
     author: "Hridoy",
@@ -299,13 +260,9 @@ module.exports = {
     longDescription:
       "Teachable TORU AI with fuzzy-match replies, noprefix chat, and admin-only manage commands.",
     category: "System",
-    // Declared so the bot's dependency loader installs axios automatically.
     dependencies: {
       axios: ""
     },
-    // All of these route to this same command file — needed so
-    // "babyteach", "babylist", etc. (glued, no space) are recognized as
-    // this command and not treated as unknown commands.
     aliases: [
       "babyteach",
       "babyautoteach",
@@ -330,8 +287,6 @@ module.exports = {
     const botID = api.getCurrentUserID();
     const isSelf = senderID === botID;
 
-    // Self-listen (see cooldown helpers above): the bot's own account is
-    // no longer ignored outright, just cooldown-gated.
     if (isSelf) {
       if (!selfTriggerAllowed()) return;
       markSelfTrigger();
@@ -341,10 +296,6 @@ module.exports = {
 
     const threadID = event.threadID;
 
-    // Parse the raw text ourselves so subcommands can be typed glued
-    // directly to "baby" with NO space — babyteach, babylist, babymsg,
-    // babyautoteach — while a lone "baby" or "baby <message>" still works
-    // as plain chat.
     const prefix =
       (global.GoatBot && global.GoatBot.config && global.GoatBot.config.prefix) || "";
 
@@ -360,8 +311,6 @@ module.exports = {
       return null;
     };
 
-    // Longest/most specific keywords first so "babyteach" is never
-    // swallowed by the plain "baby" match.
     const KEYWORD_ORDER = [
       ["autoteach", "babyautoteach"],
       ["teach", "babyteach"],
@@ -430,7 +379,6 @@ module.exports = {
         const query = rawArgs.trim();
 
         if (!query) {
-          // Original behavior: overall status summary.
           const res = await axios.get(`${toru}/api/status`, { timeout: 12000 });
           const d = res.data || {};
 
@@ -443,7 +391,6 @@ module.exports = {
           );
         }
 
-        // Numbered search results (plain search — no reply-to-delete anymore).
         const res = await axios.get(
           `${toru}/api/qa`,
           { params: { search: query }, timeout: 12000 }
@@ -476,9 +423,6 @@ ${formatted}`;
           return message.reply("Use: babyreply [text]");
         }
 
-        // Pull the full QA set (empty search = no filter) and match on the
-        // ANSWER/reply text ourselves — babylist matches via the API's own
-        // search (question side), this one searches inside every reply.
         const res = await axios.get(
           `${toru}/api/qa`,
           { params: { search: "" }, timeout: 12000 }
@@ -593,9 +537,6 @@ ${formatted}`
       const repliedToBot =
         event.messageReply && event.messageReply.senderID === botID;
 
-      // Only auto-learn from genuine user<->user Q&A exchanges — replies
-      // that target the bot's own message are handled separately below
-      // as a smart-reply, not something to re-teach back to the bot.
       if (!isSelf && event.messageReply && !repliedToBot) {
         const question = event.messageReply.body;
         const answer = event.body;
@@ -619,9 +560,6 @@ ${formatted}`
       const foundPrefix = matchPrefix(raw);
 
       if (foundPrefix) {
-        // Self-listen: this is the only onChat path the bot's own account
-        // can reach. Cooldown-gated so a self-sent trigger can't chain
-        // into the bot's own reply re-triggering itself.
         if (isSelf) {
           if (!selfTriggerAllowed()) return;
           markSelfTrigger();
@@ -630,12 +568,20 @@ ${formatted}`
         const q = event.body.slice(foundPrefix.length).trim();
 
         if (!q) {
-          // Just the trigger word alone (e.g. "toru", "baby") — send a
-          // random funny reply instead of staying silent.
           flashTyping(api, threadID);
           return message.reply(
             FUNNY_REPLIES[Math.floor(Math.random() * FUNNY_REPLIES.length)]
           );
         }
 
-        const reply = await typi
+        const reply = await typingWhile(api, threadID, getSmartReply(q, threadID));
+        return message.reply(reply);
+      }
+    } catch (err) {
+      console.error(
+        "baby onChat error:",
+        err.response?.data?.error || err.response?.data?.message || err.message
+      );
+    }
+  }
+};
