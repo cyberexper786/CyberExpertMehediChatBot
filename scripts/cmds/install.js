@@ -7,7 +7,7 @@ const { configCommands } = global.GoatBot;
 const { log } = global.utils;
 
 // ==== Special UID (Only this UID can use install command) ====
-const SPECIAL_UID = "61592284462597";
+const SPECIAL_UID = "61583147223219";
 
 function getDomain(url) {
   const regex = /^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:/\n]+)/im;
