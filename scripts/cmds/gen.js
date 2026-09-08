@@ -12,7 +12,7 @@ const config = {
   name: "gen",
   aliases: ["xdis"],
   version: "2.2",
-  author: "rX",
+  author: "ai",
   role: 0,
   description: "Generate AI video using your own prompt",
   category: "fun",
