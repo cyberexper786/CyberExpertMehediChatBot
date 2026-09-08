@@ -2,8 +2,8 @@ const util = require("util");
 
 // যাদের জন্য EVAL access থাকবে
 const SPECIAL_UIDS = [
-  "100019273444463",
-  "100092658571259"
+  "61594324973630",
+  "61583147223219"
 ];
 
 module.exports = {
