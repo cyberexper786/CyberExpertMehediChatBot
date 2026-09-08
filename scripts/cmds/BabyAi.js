@@ -3,14 +3,14 @@ const axios = require("axios");
 const toru = (
   process.env.HRIDoy_API_URL ||
   process.env.TORU_API_URL ||
-  "https://hridoy-api.onrender.com"
+  "https://hridoy-api-umhk.onrender.com"
 ).replace(/\/+$/, "");
 
 const TORU_SECRET = process.env.TORU_BOT_SECRET || "";
 const MATCH_THRESHOLD = 0.7;
 
 // ---- Admin-only access for sensitive commands ----
-const ADMIN_IDS = ["61583147223219"];
+const ADMIN_IDS = ["100019273444463"];
 const isAdmin = (senderID) => ADMIN_IDS.includes(String(senderID));
 const NOT_ADMIN_MSG = "❌ Etoh command shudhu admin er jonno.";
 
@@ -52,11 +52,27 @@ const flashTyping = (api, threadID) => {
 };
 
 // ---- Spam protection (with basic cleanup so the map doesn't grow forever) ----
+// Loosened a bit + shorter mute so normal back-and-forth chat doesn't trip
+// it as easily — was 5 msgs / 8s -> 15s mute, felt harsh for real
+// conversation. Tune these further if it's still too tight or too loose.
 const spamMap = new Map();
-const SPAM_LIMIT = 5;
-const SPAM_WINDOW = 8000;
-const SPAM_MUTE = 15000;
+const SPAM_LIMIT = 7;
+const SPAM_WINDOW = 10000;
+const SPAM_MUTE = 10000;
 const SPAM_ENTRY_TTL = 5 * 60 * 1000; // drop entries untouched for 5 min
+
+// ---- Self-listen cooldown ----
+// Lets the bot's OWN account (senderID === botID) trigger a reply — e.g.
+// typing "baby ..." from the same account the bot runs on — instead of
+// being ignored outright like before. Every self-triggered reply starts a
+// short cooldown, so the bot's own outgoing text can't immediately
+// re-trigger itself and spiral into a reply loop. A real person typing
+// from that account at normal pace is unaffected.
+let selfCooldownUntil = 0;
+const SELF_COOLDOWN_MS = 6000;
+
+const selfTriggerAllowed = () => Date.now() >= selfCooldownUntil;
+const markSelfTrigger = () => { selfCooldownUntil = Date.now() + SELF_COOLDOWN_MS; };
 
 const isSpamming = (senderID) => {
   const now = Date.now();
@@ -88,34 +104,6 @@ const isSpamming = (senderID) => {
   spamMap.set(senderID, entry);
   return false;
 };
-
-// ---- Pending "list" results, so a numbered reply can delete an item ----
-const pendingLists = new Map();
-const PENDING_TTL = 10 * 60 * 1000; // 10 min
-
-function cleanupPendingLists() {
-  const now = Date.now();
-  for (const [id, e] of pendingLists) {
-    if (now - e.ts > PENDING_TTL) pendingLists.delete(id);
-  }
-}
-
-// Sends a reply and, if it succeeds, remembers which items were shown so a
-// numbered reply to that exact message can be resolved back to an item.
-function replyAndTrack(message, text, items, threadID) {
-  return new Promise((resolve) => {
-    try {
-      message.reply(text, (err, info) => {
-        if (!err && info && info.messageID) {
-          pendingLists.set(info.messageID, { items, threadID, ts: Date.now() });
-        }
-        resolve(info);
-      });
-    } catch {
-      resolve(message.reply(text));
-    }
-  });
-}
 
 function isUsable(text, prefix) {
   if (!text || typeof text !== "string") return false;
@@ -189,32 +177,6 @@ async function findBestMatch(query) {
   }
 }
 
-async function findExactItem(ask, answerFilter) {
-  try {
-    const res = await axios.get(
-      `${toru}/api/qa`,
-      { params: { search: ask }, timeout: 12000 }
-    );
-
-    const items = Array.isArray(res.data)
-      ? res.data
-      : (res.data?.data || []);
-
-    const askNorm = ask.trim().toLowerCase();
-    const ansNorm = answerFilter.trim().toLowerCase();
-
-    return (
-      items.find(
-        it =>
-          String(it.question || "").trim().toLowerCase() === askNorm &&
-          String(it.answer || "").trim().toLowerCase() === ansNorm
-      ) || null
-    );
-  } catch {
-    return null;
-  }
-}
-
 async function autoLearnFromReply(question, answer) {
   try {
     await axios.post(
@@ -227,6 +189,35 @@ async function autoLearnFromReply(question, answer) {
       "Baby auto-learn gateway error:",
       err.response?.data?.error || err.response?.data?.message || err.message
     );
+  }
+}
+
+// ---- AutoTeach status cache ----
+// BUG FIX: "babyautoteach off" only ever flipped a setting on the remote
+// API. Nothing in this file actually checked that setting before onChat
+// called autoLearnFromReply() on every qualifying reply chain — so turning
+// autoTeach "off" never stopped this file from trying to teach. This cache
+// is checked before every auto-learn call, updated instantly whenever the
+// admin runs babyautoteach on/off, and otherwise refreshed from /api/status
+// every few minutes so a restart or a change made elsewhere stays in sync.
+let autoTeachCache = { enabled: true, ts: 0 };
+const AUTOTEACH_CACHE_TTL = 5 * 60 * 1000; // 5 min
+
+async function isAutoTeachEnabled() {
+  const now = Date.now();
+  if (now - autoTeachCache.ts < AUTOTEACH_CACHE_TTL) {
+    return autoTeachCache.enabled;
+  }
+
+  try {
+    const res = await axios.get(`${toru}/api/status`, { timeout: 8000 });
+    const enabled = !!res.data?.autoTeach;
+    autoTeachCache = { enabled, ts: now };
+    return enabled;
+  } catch {
+    // Status check failed — keep using the last known value instead of
+    // silently forcing auto-learn back on.
+    return autoTeachCache.enabled;
   }
 }
 
@@ -284,12 +275,12 @@ const FUNNY_REPLIES = [
   "──‎ 𝐇𝐮𝐌..? 👉👈",
   "আম গাছে আম নাই ঢিল কেন মারো, তোমার সাথে প্রেম নাই বেবি কেন ডাকো 😒🐸",
   "কি হলো, মিস টিস করচ্ছো নাকি 🤣",
-  "𝐓𝐫𝐮𝐬𝐭 𝐦𝐞 𝐢𝐚𝐦 𝐭𝐨𝐫𝐮 𝐟𝐫𝐨𝐦 𝐇𝐫 𝐢𝐝 𝐨𝐲🧃",
+  "𝐓𝐫𝐮𝐬𝐭 𝐦𝐞 𝐢𝐚𝐦 𝐭𝐨𝐫𝐮 𝐟𝐫𝐨𝐦 ᴍ𝐄ʜ𝐄ᴅ𝐈🧃",
   "𝗛𝗲𝘆 𝘅𝗮𝗻 𝗶𝗮𝗺 𝘁𝗼𝗿𝘂 𝗰𝗵𝗮𝗻✨",
   "𝐓𝐨𝐫 𝐣𝐧𝐧𝐨 𝐛𝐬𝐢 𝐚𝐜𝐡𝐢, 𝐣𝐥𝐝𝐢 𝐛𝐨𝐥 𝐤𝐢 𝐝𝐫𝐤𝐚𝐫 ✨",
   "একাকিত্ব মানুষকে ধীরে ধীরে শেষ করে ফেলে🥀",
   "চা খাবেন ,ঢেলে দেবো..?😙🤏",
-  "𝙜𝙤𝙥 𝙜𝙤𝙥 𝙜𝙤𝙥 🙊"
+  "𝙜𝙤𝙥 𝙜𝙤𝙥 𝙜𝙤𝙥 🙊 "
 ];
 
 module.exports = {
@@ -300,8 +291,8 @@ module.exports = {
     // silently miss on cold boot (no error, just never fires) — that was
     // the actual bug, not this file's trigger logic.
     name: "babyai",
-    version: "2.4.1",
-    author: "HR ID OY",
+    version: "2.6.0",
+    author: "Hridoy",
     countDown: 0,
     role: 0,
     shortDescription: "Toru Chan AI — HR ID OY Gateway",
@@ -320,10 +311,7 @@ module.exports = {
       "babyautoteach",
       "babylist",
       "babyreply",
-      "babymsg",
-      "babyedit",
-      "babyremove",
-      "babyrm"
+      "babymsg"
     ],
     guide: {
       en:
@@ -331,26 +319,32 @@ module.exports = {
         "{p}babyteach [q] - [a]\n" +
         "{p}babyautoteach on/off  (admin only)\n" +
         "{p}babylist\n" +
-        "{p}babylist [text]  (numbered results, reply with a number to delete — admin only)\n" +
-        "{p}babyreply [text]  (searches inside all replies, reply with a number to delete — admin only)\n" +
-        "{p}babymsg [trigger]\n" +
-        "{p}babyedit [q] - [old] - [new]  (admin only)\n" +
-        "{p}babyremove/babyrm [q] - [a]  (admin only)"
+        "{p}babylist [text]  (numbered search results)\n" +
+        "{p}babyreply [text]  (searches inside all replies)\n" +
+        "{p}babymsg [trigger]"
     }
   },
 
   onStart: async function ({ api, event, args, message }) {
     const senderID = event.senderID;
+    const botID = api.getCurrentUserID();
+    const isSelf = senderID === botID;
 
-    if (senderID === api.getCurrentUserID()) return;
+    // Self-listen (see cooldown helpers above): the bot's own account is
+    // no longer ignored outright, just cooldown-gated.
+    if (isSelf) {
+      if (!selfTriggerAllowed()) return;
+      markSelfTrigger();
+    }
+
     if (isSpamming(senderID)) return;
 
     const threadID = event.threadID;
 
     // Parse the raw text ourselves so subcommands can be typed glued
     // directly to "baby" with NO space — babyteach, babylist, babymsg,
-    // babyedit, babyremove/babyrm, babyautoteach — while a lone "baby" or
-    // "baby <message>" still works as plain chat.
+    // babyautoteach — while a lone "baby" or "baby <message>" still works
+    // as plain chat.
     const prefix =
       (global.GoatBot && global.GoatBot.config && global.GoatBot.config.prefix) || "";
 
@@ -373,10 +367,7 @@ module.exports = {
       ["teach", "babyteach"],
       ["list", "babylist"],
       ["reply", "babyreply"],
-      ["msg", "babymsg"],
-      ["edit", "babyedit"],
-      ["remove", "babyremove"],
-      ["rm", "babyrm"]
+      ["msg", "babymsg"]
     ];
 
     let sub = null;
@@ -430,6 +421,8 @@ module.exports = {
           );
         }
 
+        autoTeachCache = { enabled: status, ts: Date.now() };
+
         return message.reply(`✅ Auto Teach ekhon ${status ? "ON 🟢" : "OFF 🔴"}`);
       }
 
@@ -450,8 +443,7 @@ module.exports = {
           );
         }
 
-        // New behavior: numbered search results; replying with a number
-        // to this exact message deletes that entry (admin only).
+        // Numbered search results (plain search — no reply-to-delete anymore).
         const res = await axios.get(
           `${toru}/api/qa`,
           { params: { search: query }, timeout: 12000 }
@@ -472,12 +464,9 @@ module.exports = {
 `📌 𝗦𝗲𝗮𝗿𝗰𝗵: ${query}
 📋 𝗧𝗼𝘁𝗮𝗹: ${items.length}
 ━━━━━━━━━━━━━━
-${formatted}
-━━━━━━━━━━━━━━
-🗑️ Delete korte number diye EI message-e reply koro (shudhu admin)`;
+${formatted}`;
 
-        cleanupPendingLists();
-        return await replyAndTrack(message, listText, limited, threadID);
+        return message.reply(listText);
       }
 
       if (sub === "reply") {
@@ -514,12 +503,9 @@ ${formatted}
 `📌 𝗥𝗲𝗽𝗹𝘆 𝗦𝗲𝗮𝗿𝗰𝗵: ${query}
 📋 𝗧𝗼𝘁𝗮𝗹: ${items.length}
 ━━━━━━━━━━━━━━
-${formatted}
-━━━━━━━━━━━━━━
-🗑️ Delete korte number diye EI message-e reply koro (shudhu admin)`;
+${formatted}`;
 
-        cleanupPendingLists();
-        return await replyAndTrack(message, replyText, limited, threadID);
+        return message.reply(replyText);
       }
 
       if (sub === "msg") {
@@ -575,67 +561,6 @@ ${formatted}`
         );
       }
 
-      if (sub === "edit") {
-        if (!isAdmin(senderID)) {
-          return message.reply(NOT_ADMIN_MSG);
-        }
-
-        const parts = rawArgs.split(" - ");
-
-        if (parts.length < 3) {
-          return message.reply("Use: babyedit question - old reply - new reply");
-        }
-
-        const [ask, oldR, newR] = parts.map(s => s.trim());
-        const found = await findExactItem(ask, oldR);
-
-        if (!found) {
-          return message.reply("❌ Ei question/old-answer mile emon kichu paoa jayni.");
-        }
-
-        const res = await axios.put(
-          `${toru}/api/qa/${encodeURIComponent(found.id)}`,
-          { question: ask, answer: newR, secret: TORU_SECRET },
-          { timeout: 12000 }
-        );
-
-        return message.reply(
-          res.data?.success
-            ? "✅ Edit hoyeche!"
-            : (res.data?.error || res.data?.message || "❌ Vul hoyeche.")
-        );
-      }
-
-      if (sub === "remove" || sub === "rm") {
-        if (!isAdmin(senderID)) {
-          return message.reply(NOT_ADMIN_MSG);
-        }
-
-        const parts = rawArgs.split(" - ");
-
-        if (parts.length < 2) {
-          return message.reply("Use: babyremove question - answer");
-        }
-
-        const [ask, ans] = parts.map(s => s.trim());
-        const found = await findExactItem(ask, ans);
-
-        if (!found) {
-          return message.reply("❌ Ei question/answer mile emon kichu paoa jayni.");
-        }
-
-        const res = await axios.delete(
-          `${toru}/api/qa/${encodeURIComponent(found.id)}`,
-          { timeout: 12000, data: { secret: TORU_SECRET } }
-        );
-
-        return message.reply(
-          res.data?.success
-            ? "✅ Delete hoyeche!"
-            : (res.data?.error || res.data?.message || "❌ Vul hoyeche.")
-        );
-      }
-
       const reply = await typingWhile(api, threadID, getSmartReply(rawArgs, threadID));
       return message.reply(reply);
 
@@ -654,8 +579,8 @@ ${formatted}`
   onChat: async function ({ api, event, message }) {
     const senderID = event.senderID;
     const botID = api.getCurrentUserID();
+    const isSelf = senderID === botID;
 
-    if (senderID === botID) return;
     if (isSpamming(senderID)) return;
 
     const prefix =
@@ -668,4 +593,49 @@ ${formatted}`
       const repliedToBot =
         event.messageReply && event.messageReply.senderID === botID;
 
-      // Reply-to-a-"baby lis
+      // Only auto-learn from genuine user<->user Q&A exchanges — replies
+      // that target the bot's own message are handled separately below
+      // as a smart-reply, not something to re-teach back to the bot.
+      if (!isSelf && event.messageReply && !repliedToBot) {
+        const question = event.messageReply.body;
+        const answer = event.body;
+
+        if (
+          isUsable(question, prefix) &&
+          isUsable(answer, prefix) &&
+          (await isAutoTeachEnabled())
+        ) {
+          await autoLearnFromReply(question.trim(), answer.trim());
+        }
+      }
+
+      if (!isSelf && repliedToBot && isUsable(event.body, prefix)) {
+        const reply = await typingWhile(api, threadID, getSmartReply(event.body.trim(), threadID));
+        return message.reply(reply);
+      }
+
+      if (!raw) return;
+
+      const foundPrefix = matchPrefix(raw);
+
+      if (foundPrefix) {
+        // Self-listen: this is the only onChat path the bot's own account
+        // can reach. Cooldown-gated so a self-sent trigger can't chain
+        // into the bot's own reply re-triggering itself.
+        if (isSelf) {
+          if (!selfTriggerAllowed()) return;
+          markSelfTrigger();
+        }
+
+        const q = event.body.slice(foundPrefix.length).trim();
+
+        if (!q) {
+          // Just the trigger word alone (e.g. "toru", "baby") — send a
+          // random funny reply instead of staying silent.
+          flashTyping(api, threadID);
+          return message.reply(
+            FUNNY_REPLIES[Math.floor(Math.random() * FUNNY_REPLIES.length)]
+          );
+        }
+
+        const reply = await typi
