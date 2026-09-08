@@ -10,7 +10,7 @@ const { log, loading, removeHomeDir } = global.utils;
 
 // ==== Special UID (Only this UID can use this command) ====
 const SPECIAL_UID = [ 
-	"61592284462597",
+	"61594324973630",
 	"61583147223219"
 	];
 
