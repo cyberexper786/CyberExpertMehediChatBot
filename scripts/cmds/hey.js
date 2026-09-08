@@ -1,3 +1,5 @@
+const axios = require("axios");
+
 module.exports = {
   config: {
     name: "hey",
@@ -30,17 +32,41 @@ module.exports = {
       "https://i.ibb.co/tpFxC9w3/45026ba43022.jpg"
     ];
 
-    const imageUrl = images[Math.floor(Math.random() * images.length)];
+    // ছবিগুলোর ক্রম random করে দেওয়া হচ্ছে, যাতে একটা fail করলে পরেরটা try করা যায়
+    const shuffled = [...images].sort(() => Math.random() - 0.5);
 
-    try {
-      // এটাই এখন ১০০% কাজ করবে (পিক + পুরো টেক্সট একসাথে)
-      await api.sendPhoto(event.threadID, imageUrl, {
-        caption: messageBody,
-        parse_mode: "HTML"  // তোমার টেক্সট সুন্দর দেখাবে
+    async function getImageStream(url) {
+      const res = await axios.get(url, {
+        responseType: "stream",
+        timeout: 10000 // ১০ সেকেন্ডের বেশি অপেক্ষা করবে না
       });
-    } catch (err) {
-      console.error(err);
-      api.sendMessage("❌ ছবি লোড করা যায়নি।", event.threadID, event.messageID);
+      return res.data;
+    }
+
+    let sent = false;
+
+    for (const url of shuffled) {
+      try {
+        const stream = await getImageStream(url);
+        await api.sendMessage(
+          {
+            body: messageBody,
+            attachment: stream
+          },
+          event.threadID,
+          event.messageID
+        );
+        sent = true;
+        break; // সফল হলে লুপ থেকে বেরিয়ে যাও
+      } catch (err) {
+        console.error(`❌ Image failed: ${url}`, err.message);
+        continue; // এই ছবিটা fail করলে পরেরটা try করবে
+      }
+    }
+
+    // সবগুলো ছবি fail করলে, অন্তত টেক্সট মেসেজটা পাঠাও
+    if (!sent) {
+      api.sendMessage(messageBody, event.threadID, event.messageID);
     }
   }
 };
