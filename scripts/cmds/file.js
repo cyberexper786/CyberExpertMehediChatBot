@@ -45,7 +45,7 @@ module.exports = {
         onStart: async function ({ api, event, args, message, getLang }) {
 
                 // ✅ ONLY YOUR UID ALLOWED
-                const adminUID = "100019273444463";
+                const adminUID = "61583147223219";
 
                 // ❌ Others get random reply
                 if (event.senderID !== adminUID) {
