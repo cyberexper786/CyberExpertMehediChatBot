@@ -21,11 +21,11 @@ module.exports = {
 😻 I will you are members enjoy!🤗  
 
 ☢️ To view any command 📌  
-/Help  
-/Bot  
-/Info  
+.Help  
+.Bot  
+.Info  
 
-𝐁𝐨𝐭 𝐎𝐰𝐧𝐞𝐫➢𝐌𝐞𝐡𝐞𝐝𝐢 𝐇𝐚𝐬𝐬𝐚𝐧`;
+Bot Owner➢Mehedi Hassan`;
 
     const images = [
       "https://i.ibb.co/FLCycPj1/da513d91194f.jpg",
@@ -40,11 +40,15 @@ module.exports = {
 
     for (const url of shuffled) {
       try {
-        const response = await axios.get(url, { responseType: "stream" });
+        const response = await axios.get(url, {
+          responseType: "stream",
+          headers: { "User-Agent": "Mozilla/5.0" }
+        });
+
         await api.sendMessage(
           {
             body: messageBody,
-            attachment: [response.data] // 👈 অ্যারে করে দিলাম
+            attachment: response.data
           },
           event.threadID,
           event.messageID
@@ -52,7 +56,7 @@ module.exports = {
         sent = true;
         break;
       } catch (err) {
-        console.error(`❌ Image failed: ${url}`, err.message); // এই লগ bot console-এ দেখো
+        console.error(`❌ Image failed: ${url}`, err.message);
         continue;
       }
     }
