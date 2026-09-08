@@ -1,3 +1,6 @@
+const Stream = require('fs-extra'); // এটা এখনো লাগবে না, বাদ দাও
+const path = require('path'); // লাগবে না, বাদ দাও
+
 module.exports = {
   config: {
     name: "hey",
@@ -12,21 +15,23 @@ module.exports = {
   },
 
   onStart: async function ({ api, event }) {
-    const messageBody =
-`🌸 Assalamualaikum 🌸
-🌺 Thanks you so much for using my bot your group ❤️‍🩹
-😻 I will you are members enjoy!🤗
+    const messageBody = `🌸 Assalamualaikum 🌸  
+🌺 Thanks you so much for using my bot your group ❤️‍🩹  
+😻 I will you are members enjoy!🤗  
 
-☢️ To view any command 📌
-/Help
-/Bot
-/Info`;
+☢️ To view any command 📌  
+/Help  
+/Bot  
+/Info  
 
+𝐁𝐨𝐭 𝐎𝐰𝐧𝐞𝐫➢𝐌𝐞𝐡𝐞𝐝𝐢 𝐇𝐚𝐬𝐬𝐚𝐧`;
+
+    // ইমেজ URL লিস্ট (যেকোনো একটা র‍্যান্ডম পাঠাবে)
     const images = [
-      "https://i.imgur.com/22jvZAY.jpeg",
-      "https://i.imgur.com/RRfliha.jpeg",
-      "https://i.imgur.com/22jvZAY.jpeg",
-      "https://i.imgur.com/CJSfSzw.jpeg"
+      "https://i.ibb.co/FLCycPj1/da513d91194f.jpg",
+      "https://i.ibb.co/Q35y3MTt/bd2649afc444.jpg",
+      "https://i.ibb.co/spypZP9y/e9cb9a41729d.jpg",
+      "https://i.ibb.co/tpFxC9w3/45026ba43022.jpg"
     ];
 
     const imageUrl = images[Math.floor(Math.random() * images.length)];
