@@ -6,7 +6,7 @@ module.exports = {
     name: "owner",
     version: "1.3.3",
     author: "Mᴏʜᴀᴍᴍᴀᴅ Aᴋᴀsʜ",
-    role: 0,
+    role: 2,
     shortDescription: "Owner information with video",
     category: "Information",
     guide: {
