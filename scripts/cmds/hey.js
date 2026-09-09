@@ -45,8 +45,17 @@ module.exports = {
 				"Bot Owner➢Mehedi Hassan"
 		};
 
-		if (imageLink)
-			msg.attachment = await global.utils.getStreamFromURL(imageLink);
+		try {
+			msg.attachment = await global.utils.getStreamFromURL(imageLink, {
+				headers: {
+					"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+					"Referer": "https://imgur.com/",
+					"Accept": "image/*"
+				}
+			});
+		} catch (err) {
+			console.error("hey.js image fetch failed:", imageLink, "|", err.message);
+		}
 
 		return api.sendMessage(msg, threadID, messageID);
 	}
