@@ -41,7 +41,7 @@ module.exports = {
 		version: "1.1",
 		author: "EryXenX",
 		countDown: 0,
-		role: 0,
+		role: 2,
 		category: "System",
 		shortDescription: "Reply when only prefix is sent",
 		longDescription: "Sends a welcome message with image when a user sends only the prefix",
