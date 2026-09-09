@@ -13,7 +13,7 @@ module.exports = {
  const { threadID, messageID } = event;
  global.__autoReactStatus??= {};
  if (global.__autoReactStatus[threadID] === undefined)
- global.__autoReactStatus[threadID] = false;
+ global.__autoReactStatus[threadID] = true;
 
  const cmd = args[0]?.toLowerCase();
 
