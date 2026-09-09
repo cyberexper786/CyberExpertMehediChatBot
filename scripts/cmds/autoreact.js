@@ -2,32 +2,38 @@ module.exports = {
  config: {
  name: "autoreact",
  aliases: ["ar"],
- version: "6.2.2",
+ version: "6.1.0",
  author: "𝐌𝐚𝐑𝐮𝐅",
  role: 0,
+ countDown: 0,
  category: "system",
- description: "Auto react on/off with status"
+ description: "Auto react on/off + status + react to every message"
  },
 
  onStart: async function ({ api, event, args }) {
  const { threadID, messageID } = event;
+ // global data init
  global.__autoReactStatus??= {};
  if (global.__autoReactStatus[threadID] === undefined)
- global.__autoReactStatus[threadID] = true;
+ global.__autoReactStatus[threadID] = false; // ডিফল্ট OFF
 
  const cmd = args[0]?.toLowerCase();
 
  if (cmd === "on") {
  global.__autoReactStatus[threadID] = true;
- return api.sendMessage("✅ 𝐀𝐮𝐭𝐨𝐑𝐞𝐚𝐜𝐭 𝐄𝐧𝐚𝐛𝐥𝐞𝐝", threadID, messageID);
+ return api.sendMessage("✅ AutoReact চালু করা হলো", threadID, messageID);
  }
  else if (cmd === "off") {
  global.__autoReactStatus[threadID] = false;
- return api.sendMessage("❌ 𝐀𝐮𝐭𝐨𝐑𝐞𝐚𝐜𝐭 𝐃𝐢𝐬𝐚𝐛𝐥𝐞𝐝", threadID, messageID);
+ return api.sendMessage("❌ AutoReact বন্ধ করা হলো", threadID, messageID);
+ }
+ else if (cmd === "status") {
+ const status = global.__autoReactStatus[threadID]? "✅ ON" : "❌ OFF";
+ return api.sendMessage(`📊 AutoReact Status: ${status}\n\nCommands:\nautoreact on\nautoreact off\nautoreact status`, threadID, messageID);
  }
  else {
- const status = global.__autoReactStatus[threadID]? "✅ 𝐎𝐍" : "❌ 𝐎𝐅𝐅";
- return api.sendMessage(`📊 𝐒𝐭𝐚𝐭𝐮𝐬: ${status}`, threadID, messageID);
+ const status = global.__autoReactStatus[threadID]? "✅ ON" : "❌ OFF";
+ return api.sendMessage(`📊 AutoReact Status: ${status}\n\nCommands:\nautoreact on\nautoreact off\nautoreact status`, threadID, messageID);
  }
  },
 
@@ -36,24 +42,30 @@ module.exports = {
  if (!messageID) return;
  if (senderID === api.getCurrentUserID()) return;
 
+ // global data init
  global.__autoReactStatus??= {};
  if (global.__autoReactStatus[threadID] === undefined)
- global.__autoReactStatus[threadID] = false;
+ global.__autoReactStatus[threadID] = false; // ডিফল্ট OFF
 
+ // OFF থাকলে রিয়েক্ট দিবে না
  if (!global.__autoReactStatus[threadID]) return;
 
+ // 100+ ইমোজি লিস্ট 💫
  const reacts = [
- "❤️","🧡","💛","💚","💙","💜","🤍","🖤","🤎","🩷","🩵","🩶","💖","💗","💘","💝","💞","💕","💓","💌","💟",
- "💫","✨","🌟","⭐","💥","⚡","🔥","💯","🎉","🎊","🎈","🎁","🏆","👑","💎","💍",
- "🌸","🌺","🌻","🌷","🌹","🌼","💐","🍀","🌿","🌾","🌲","🌳","🌴","🌈","🌙","🌞",
- "🫶","🫰","👌","👍","👏","🙌","🤝","✌️","🤞","🤙","💪","💅","💋","👩‍❤️‍👨",
- "🍓","🍒","🍎","🍉","🍑","🍍","🥭","🥝","🍇","🍊","🍋","🍈","🍌","🍐","🍏","🥥",
- "🍩","🍰","🧁","🍪","🍫","🍭","🍯","🍬","🎂","🧋","☕","🥂","🍦","🍧","🍡","🍮",
- "🦋","🕊️","🪽","🐼","🐰","🐸","🐯","🐨","🐱","🐶","🦄","🐧","🐤","🐣","🐥","🐺",
- "📸","💡","✅","🎁","🎈","🌟","💫","✨","💥","⚡","🔥","💯","🏆","👑","💎","💍"
+ "💫","🚀","🎉","📸","🎊","💡","❤️","🚬","🧡","💉","💛","🍔","💚","🐸","🩵","🪳",
+ "💙","🪱","💜","🐯","🤎","🙄","🖤","😶","🩶","🥵","🤍","🥶","🩷","💘","😥","😎",
+ "🤨","💖","😁","💦","😑","🫶","🤧","👌","😪","🫰","👩‍❤️‍👨","👩‍❤️‍","✅","💐","🐼",
+ "🌹","🐰","🌺","🍁","🌷","🍼","🪷","🍬","🌸","🍂","🔪","🌻","🎁","🌼","☔","🌈",
+ "⚡","✨","⛈️","🕊️","☀️","🪽","🌟","💥","🔥","💯","🏆","👑","💎","💍","🎁","🎈",
+ "🍀","🌻","🌼","🌷","🌹","🌺","🌸","💐","🍓","🍒","🍎","🍉","🍑","🍍","🥭","🥝",
+ "🍩","🍰","🧁","🍪","🍫","🍭","🍯","🥂","☕","🧋","🍦","🍧","🎂","🧡","💛","💚",
+ "💙","💜","🤍","🖤","🤎","🩷","🩵","🩶","💗","💓","💞","💕","💝","💌","💟","🫰",
+ "🫶","🤝","👏","🙌","👍","👌","✌️","🤞","🤙","💪","🦋","🌈","🌙","⭐","🌟","🌞"
  ];
 
  const react = reacts[Math.floor(Math.random() * reacts.length)];
+
+ // সাথে রিয়েক্ট
  api.setMessageReaction(react, messageID);
  }
 };
