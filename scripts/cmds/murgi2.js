@@ -82,4 +82,22 @@ module.exports = {
     message.reply("🔥 Murgi mode started.");
 
     try {
-      while (activeMurg
+      while (activeMurgi.get(event.threadID)) {
+        for (const msg of messages) {
+          if (!activeMurgi.get(event.threadID)) break;
+
+          await delay(2500);
+          message.reply({
+            body: `${name}\n${msg}`,
+            mentions: arraytag
+          });
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      activeMurgi.delete(event.threadID);
+      message.reply("Something went wrong!");
+    }
+  }
+};
+    
