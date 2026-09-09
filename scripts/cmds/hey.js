@@ -75,7 +75,7 @@ module.exports = {
 				`   ${prefix}𝗕𝗼𝘁\n` +
 				`   ${prefix}𝗜𝗻𝗳𝗼\n` +
 				"╰───────────────╯\n\n" +
-				"👑 𝗕𝗼𝘁 𝗢𝘄𝗻𝗲𝗿 ➢ 𝗠𝗲𝗵𝗲𝗱𝗶 𝗛𝗮𝘀𝘀𝗮𝗻"
+				"👑𝗢ᴡɴᴇʀ ♡ ᴍᴇʜᴇᴅɪ ᴋʜᴀɴ👑"
 		};
 
 		const cachedFiles = fs.readdirSync(cacheDir).filter(f => fs.statSync(path.join(cacheDir, f)).size > 0);
