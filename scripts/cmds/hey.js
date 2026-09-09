@@ -1,68 +1,53 @@
-const axios = require("axios");
-
 module.exports = {
-  config: {
-    name: "hey",
-    version: "1.0.0",
-    author: "EryXenX",
-    role: 0,
-    countDown: 5,
-    shortDescription: "Send bot welcome message with photo",
-    longDescription: "Send bot welcome message with photo",
-    category: "Information",
-    guide: {
-      en: "{pn}"
-    }
-  },
+	config: {
+		name: "hey",
+		version: "1.0",
+		author: "EryXenX",
+		countDown: 0,
+		role: 0,
+		category: "System",
+		shortDescription: "Reply when only prefix is sent",
+		longDescription: "Sends a welcome message with image when a user sends only the prefix",
+		guide: {
+			en: "{pn}"
+		}
+	},
 
-  onStart: async function ({ api, event }) {
-    const messageBody = `🌸 Assalamualaikum 🌸  
-🌺 Thanks you so much for using my bot your group ❤️‍🩹  
-😻 I will you are members enjoy!🤗  
+	onStart: async function () {},
 
-☢️ To view any command 📌  
-.Help  
-.Bot  
-.Info  
+	onChat: async function ({ api, event }) {
+		const { GoatBot } = global;
+		const { config } = GoatBot;
+		const { threadID, messageID, body } = event;
 
-Bot Owner➢Mehedi Hassan`;
+		if (!body) return;
 
-    const images = [
-      "https://i.ibb.co/FLCycPj1/da513d91194f.jpg",
-      "https://i.ibb.co/Q35y3MTt/bd2649afc444.jpg",
-      "https://i.ibb.co/spypZP9y/e9cb9a41729d.jpg",
-      "https://i.ibb.co/tpFxC9w3/45026ba43022.jpg"
-    ];
+		const prefix = config.prefix;
+		if (body.trim() !== prefix) return;
 
-    const shuffled = [...images].sort(() => Math.random() - 0.5);
+		const imageLinks = [
+			"https://i.imgur.com/22jvZAY.jpeg",
+			"https://i.imgur.com/RRfliha.jpeg",
+			"https://i.imgur.com/22jvZAY.jpeg",
+			"https://i.imgur.com/CJSfSzw.jpeg"
+		];
+		const imageLink = imageLinks[Math.floor(Math.random() * imageLinks.length)];
 
-    let sent = false;
+		const msg = {
+			body:
+				"🌸 Assalamualaikum 🌸\n" +
+				"🌺 Thanks you so much for using my bot your group ❤️‍🩹\n" +
+				"😻 I will you are members enjoy!🤗\n\n" +
+				"☢️ To view any command 📌\n" +
+				`${prefix}Help\n` +
+				`${prefix}Bot\n` +
+				`${prefix}Info\n\n` +
+				"Bot Owner➢Mehedi Hassan"
+		};
 
-    for (const url of shuffled) {
-      try {
-        const response = await axios.get(url, {
-          responseType: "stream",
-          headers: { "User-Agent": "Mozilla/5.0" }
-        });
+		if (imageLink)
+			msg.attachment = await global.utils.getStreamFromURL(imageLink);
 
-        await api.sendMessage(
-          {
-            body: messageBody,
-            attachment: response.data
-          },
-          event.threadID,
-          event.messageID
-        );
-        sent = true;
-        break;
-      } catch (err) {
-        console.error(`❌ Image failed: ${url}`, err.message);
-        continue;
-      }
-    }
-
-    if (!sent) {
-      api.sendMessage(messageBody, event.threadID, event.messageID);
-    }
-  }
+		return api.sendMessage(msg, threadID, messageID);
+	}
 };
