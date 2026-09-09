@@ -51,14 +51,14 @@ module.exports = {
     const body =
 `✦━━━━━━〔 𝑷𝑹𝑶𝑭𝑰𝑳𝑬 〕━━━━━━✦
 ✨ NAME   ➤ ᴍᴇʜᴇᴅɪ ᴋʜᴀɴ
-✨ AGE    ➤ 22+
+✨ AGE    ➤ 𝟐𝟐
 ✨ STATUS ➤ sɪɴɢʟᴇ
 ✨ LOC    ➤ ɢᴀᴢɪᴘᴜʀ ᴅʜᴀᴋᴀ
 
 ✦━━━━━━━〔 𝑺𝑶𝑪𝑰𝑨𝑳〕━━━━━━━✦
 🌐 FB   ➤ fb.me/https://Mehedi.Choudhury31
 📧 MAIL ➤ mehediprojectofficial@gmail.com
-📱 WA   ➤ 01408320931
+📱 WA   ➤ 𝟎𝟏𝟒𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟑𝟏
 
 ✦━━━━━━━━〔 𝑮𝑨𝑴𝑬〕━━━━━━━✦
 🔫    ᴍᴀɪsʜᴀ
