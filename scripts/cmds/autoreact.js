@@ -1,93 +1,59 @@
 module.exports = {
-  config: {
-    name: "autoreact",
-    version: "4.4.0",
-    author: "MOHAMMAD AKASH",
-    role: 0,
-    category: "system",
-    shortDescription: "Auto react (emoji + text)",
-    longDescription: "Stable auto reaction without silent API fail"
-  },
+ config: {
+ name: "autoreact",
+ aliases: ["ar"],
+ version: "6.2.2",
+ author: "𝐌𝐚𝐑𝐮𝐅",
+ role: 0,
+ category: "system",
+ description: "Auto react on/off with status"
+ },
 
-  onStart: async function () {},
+ onStart: async function ({ api, event, args }) {
+ const { threadID, messageID } = event;
+ global.__autoReactStatus??= {};
+ if (global.__autoReactStatus[threadID] === undefined)
+ global.__autoReactStatus[threadID] = false;
 
-  onChat: async function ({ api, event }) {
-    try {
-      const { messageID, body, senderID, threadID } = event;
-      if (!messageID || !body) return;
+ const cmd = args[0]?.toLowerCase();
 
-      // ❌ নিজের / বটের মেসেজে রিয়েক্ট না
-      if (senderID === api.getCurrentUserID()) return;
+ if (cmd === "on") {
+ global.__autoReactStatus[threadID] = true;
+ return api.sendMessage("✅ 𝐀𝐮𝐭𝐨𝐑𝐞𝐚𝐜𝐭 𝐄𝐧𝐚𝐛𝐥𝐞𝐝", threadID, messageID);
+ }
+ else if (cmd === "off") {
+ global.__autoReactStatus[threadID] = false;
+ return api.sendMessage("❌ 𝐀𝐮𝐭𝐨𝐑𝐞𝐚𝐜𝐭 𝐃𝐢𝐬𝐚𝐛𝐥𝐞𝐝", threadID, messageID);
+ }
+ else {
+ const status = global.__autoReactStatus[threadID]? "✅ 𝐎𝐍" : "❌ 𝐎𝐅𝐅";
+ return api.sendMessage(`📊 𝐒𝐭𝐚𝐭𝐮𝐬: ${status}`, threadID, messageID);
+ }
+ },
 
-      // ❌ হালকা cooldown (2.5s)
-      global.__autoReactCooldown ??= {};
-      if (
-        global.__autoReactCooldown[threadID] &&
-        Date.now() - global.__autoReactCooldown[threadID] < 2500
-      ) return;
+ onChat: async function ({ api, event }) {
+ const { messageID, senderID, threadID } = event;
+ if (!messageID) return;
+ if (senderID === api.getCurrentUserID()) return;
 
-      global.__autoReactCooldown[threadID] = Date.now();
+ global.__autoReactStatus??= {};
+ if (global.__autoReactStatus[threadID] === undefined)
+ global.__autoReactStatus[threadID] = false;
 
-      const text = body.toLowerCase();
-      let react = null;
+ if (!global.__autoReactStatus[threadID]) return;
 
-      // ==========================
-      // Emoji Categories
-      // ==========================
-      const categories = [
-        { e: ["😂","🤣","😆","😄","😁"], r: "😆" },
-        { e: ["😭","😢","🥺","💔"], r: "😢" },
-        { e: ["❤️","💖","💘","🥰","😍"], r: "❤️" },
-        { e: ["😡","🤬"], r: "😡" },
-        { e: ["😮","😱","😲"], r: "😮" },
-        { e: ["😎","🔥","💯"], r: "😎" },
-        { e: ["👍","👌","🙏"], r: "👍" },
-        { e: ["🎉","🥳"], r: "🎉" }
-      ];
+ const reacts = [
+ "❤️","🧡","💛","💚","💙","💜","🤍","🖤","🤎","🩷","🩵","🩶","💖","💗","💘","💝","💞","💕","💓","💌","💟",
+ "💫","✨","🌟","⭐","💥","⚡","🔥","💯","🎉","🎊","🎈","🎁","🏆","👑","💎","💍",
+ "🌸","🌺","🌻","🌷","🌹","🌼","💐","🍀","🌿","🌾","🌲","🌳","🌴","🌈","🌙","🌞",
+ "🫶","🫰","👌","👍","👏","🙌","🤝","✌️","🤞","🤙","💪","💅","💋","👩‍❤️‍👨",
+ "🍓","🍒","🍎","🍉","🍑","🍍","🥭","🥝","🍇","🍊","🍋","🍈","🍌","🍐","🍏","🥥",
+ "🍩","🍰","🧁","🍪","🍫","🍭","🍯","🍬","🎂","🧋","☕","🥂","🍦","🍧","🍡","🍮",
+ "🦋","🕊️","🪽","🐼","🐰","🐸","🐯","🐨","🐱","🐶","🦄","🐧","🐤","🐣","🐥","🐺",
+ "📸","💡","✅","🎁","🎈","🌟","💫","✨","💥","⚡","🔥","💯","🏆","👑","💎","💍"
+ ];
 
-      // ==========================
-      // Text Triggers
-      // ==========================
-      const texts = [
-        { k: ["haha","lol","moja","xd"], r: "😆" },
-        { k: ["sad","kharap","mon kharap","cry"], r: "😢" },
-        { k: ["love","valobasi","miss"], r: "❤️" },
-        { k: ["rag","angry","rage"], r: "😡" },
-        { k: ["wow","omg"], r: "😮" },
-        { k: ["ok","yes","okay","hmm"], r: "👍" }
-      ];
-
-      // ==========================
-      // Emoji check first
-      // ==========================
-      for (const c of categories) {
-        if (c.e.some(x => text.includes(x))) {
-          react = c.r;
-          break;
-        }
-      }
-
-      // ==========================
-      // Text check
-      // ==========================
-      if (!react) {
-        for (const t of texts) {
-          if (t.k.some(x => text.includes(x))) {
-            react = t.r;
-            break;
-          }
-        }
-      }
-
-      // ❌ কিছু না মিললে রিয়েক্ট না
-      if (!react) return;
-
-      // ⏱ Human-like delay
-      await new Promise(r => setTimeout(r, 800));
-
-      // ✅ FINAL FIX — NO callback, NO true
-      api.setMessageReaction(react, messageID);
-
-    } catch (e) {}
-  }
+ const react = reacts[Math.floor(Math.random() * reacts.length)];
+ api.setMessageReaction(react, messageID);
+ }
 };
