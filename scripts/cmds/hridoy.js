@@ -9,7 +9,7 @@ module.exports = {
     name: "hridoy",
     version: "1.4.2",
     author: "Hridoy",
-    role: 0,
+    role: 2,
     category: "Admin",
     shortDescription: "Auto profile reply with keyword + admin mention",
     countDown: 3
