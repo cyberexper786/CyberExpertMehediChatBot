@@ -5,7 +5,7 @@ module.exports = {
     name: "info",
     version: "2.5.3",
     author: "ST | Sheikh Tamim",
-    role: 0,
+    role: 2,
     countDown: 20,
     shortDescription: {
       en: "Owner & bot information"
@@ -21,9 +21,9 @@ module.exports = {
 
   onStart: async function ({ message }) {
     const ownerName = "ᴍᴀɪsʜᴀ";
-    const ownerAge = "22+";
+    const ownerAge = "𝟐𝟐";
     const ownerFB = "আ্ঁসো্ঁ ক্ঁট্ঁ খা্ঁই্ঁ🥵⎯⃝💦⎯⃝🤧⎯⃝🤭 ধ্ঁরা্ঁ প্ঁড়্ঁলে্ঁ-)সোনা 🤌(-𝙅𝙖𝙢𝙖𝙞•|•𝘽𝙤𝙬⎯͢⎯⃝🩵☺️🐰";
-    const ownerNumber = "8801408320931";
+    const ownerNumber = "𝟎𝟏𝟒𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟑𝟏";
     const status = "𝐒𝐢𝐥𝐞𝐧𝐜𝐞 𝐢𝐬 𝐌𝐲 𝐀𝐭𝐭𝐢𝐭𝐮𝐝𝐞";
 
     const botName = "ᴍᴇʜᴇᴅɪ ᴋʜᴀɴ";
