@@ -4,7 +4,7 @@ const https = require("https");
 
 module.exports = {
   config: {
-		role: 0, // auto-added: was missing
+		role: 2, // auto-added: was missing
     name: "help",
     aliases: ["menu"],
     version: "12.0",
