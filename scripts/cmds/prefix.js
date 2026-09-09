@@ -218,7 +218,7 @@ module.exports = {
     author: "Hridoy",
     description: "Full prefix system with random animation + gif — works with no bot prefix needed",
     category: "Utility",
-    role: 0,
+    role: 2,
     // 🔑 REQUIRED so "prefix" and "prefix set <newPrefix>" work WITHOUT the bot prefix
     usePrefix: false,
     guide: {
