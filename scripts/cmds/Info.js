@@ -5,7 +5,7 @@ module.exports = {
     name: "info",
     version: "2.5.3",
     author: "ST | Sheikh Tamim",
-    role: 0,
+    role: 2,
     countDown: 20,
     shortDescription: {
       en: "Owner & bot information"
