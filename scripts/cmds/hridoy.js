@@ -2,7 +2,7 @@ const axios = require("axios");
 
 const cooldowns = new Map();
 
-const adminUID = ["61594324973630", "61583147223219"];
+const adminUID = ["615943", "61583147223219"];
 
 module.exports = {
   config: {
