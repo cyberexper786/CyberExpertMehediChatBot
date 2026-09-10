@@ -106,7 +106,7 @@ module.exports = {
       fs.writeFileSync(outPath, finalBuffer);
 
       const timeString = new Date().toLocaleTimeString("en-US", { hour12: true, timeZone: "Asia/Dhaka" });
-      const dateString = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Dhaka" });
+      const da teString = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Dhaka" });
       const dayString = new Date().toLocaleDateString("en-US", { weekday: "long", timeZone: "Asia/Dhaka" });
 
       const form = {
@@ -114,7 +114,7 @@ module.exports = {
 🎀 ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴏᴜʀ ɢʀᴏᴜᴘ — ${groupName}
 📌 ʏᴏᴜ'ʀᴇ ᴛʜᴇ ${memberCount} ᴍᴇᴍʙᴇʀ ᴏɴ ᴛʜɪꜱ ɢʀᴏᴜᴘ!
 💬 ғᴇᴇʟ ғʀᴇᴇ ᴛᴏ ᴄʜᴀᴛ, ᴄᴏɴɴᴇᴄᴛ ᴀɴᴅ ʜᴀᴠᴇ ꜰᴜɴ ʜᴇʀᴇ!
-            ♡ᴍᴇʜᴇᴅɪ ᴋʜᴀɴ♡
+         ♡ᴍᴇʜᴇᴅɪ ᴋʜᴀɴ♡
        ━━━━━━━━━━━━━━━━
 📅 ${timeString} - ${dateString} - ${dayString}`,
         mentions: [{ tag: userName, id: userID }],
