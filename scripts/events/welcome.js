@@ -114,7 +114,7 @@ module.exports = {
 🎀 ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴏᴜʀ ɢʀᴏᴜᴘ — ${groupName}
 📌 ʏᴏᴜ'ʀᴇ ᴛʜᴇ ${memberCount} ᴍᴇᴍʙᴇʀ ᴏɴ ᴛʜɪꜱ ɢʀᴏᴜᴘ!
 💬 ғᴇᴇʟ ғʀᴇᴇ ᴛᴏ ᴄʜᴀᴛ, ᴄᴏɴɴᴇᴄᴛ ᴀɴᴅ ʜᴀᴠᴇ ꜰᴜɴ ʜᴇʀᴇ!
-          ♡ᴍᴇʜᴇᴅɪ ᴋʜᴀɴ♡
+            ♡ᴍᴇʜᴇᴅɪ ᴋʜᴀɴ♡
        ━━━━━━━━━━━━━━━━
 📅 ${timeString} - ${dateString} - ${dayString}`,
         mentions: [{ tag: userName, id: userID }],
