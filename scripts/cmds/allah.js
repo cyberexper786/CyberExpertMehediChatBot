@@ -5,12 +5,12 @@ const path = require("path");
 module.exports = {
   config: {
     name: "allah",
-    version: "2.0.0",
+    version: "2.1.0",
     author: "Islamick Cyber Chat",
     countDown: 5,
     role: 0,
     shortDescription: "Allah GIF",
-    longDescription: "Send a random Allah-themed GIF.",
+    longDescription: "Send an Islamic Allah-themed GIF.",
     category: "fun",
     guide: {
       en: "{pn}"
@@ -32,37 +32,84 @@ module.exports = {
     ];
 
     const cacheDir = path.join(__dirname, "cache");
-    const filePath = path.join(cacheDir, "allah.gif");
+    const filePath = path.join(
+      cacheDir,
+      `allah-${Date.now()}.gif`
+    );
+
+    const text =
+      "•┄┅════❁🌺❁════┅┄•\n\n" +
+      "        🕌 𝗔𝗹𝗹𝗮𝗵 𝗚𝗜𝗙 🕌\n\n" +
+      "      ✿┼─ 𝗔𝗹𝗹𝗮𝗵𝘂 𝗔𝗸𝗯𝗮𝗿 ─┼✿\n\n" +
+      "•┄┅════❁🌺❁════┅┄•";
 
     try {
       await fs.ensureDir(cacheDir);
 
-      const randomLink =
-        gifLinks[Math.floor(Math.random() * gifLinks.length)];
+      let downloaded = false;
 
-      const response = await axios({
-        method: "GET",
-        url: randomLink,
-        responseType: "arraybuffer",
-        timeout: 30000
-      });
+      for (const url of gifLinks) {
+        try {
+          const response = await axios.get(url, {
+            responseType: "arraybuffer",
+            timeout: 20000,
+            maxRedirects: 5,
+            headers: {
+              "User-Agent": "Mozilla/5.0"
+            }
+          });
 
-      await fs.writeFile(filePath, response.data);
+          const type = String(
+            response.headers["content-type"] || ""
+          );
+
+          if (
+            !type.includes("gif") ||
+            !response.data ||
+            response.data.length < 1000
+          ) {
+            continue;
+          }
+
+          await fs.writeFile(filePath, response.data);
+          downloaded = true;
+          break;
+
+        } catch (err) {
+          console.error(
+            "GIF download failed:",
+            url,
+            err.message
+          );
+        }
+      }
+
+      if (!downloaded) {
+        return await message.reply(
+          text +
+          "\n\n🤲 𝗔𝗹𝗹𝗮𝗵 আমাদের সবাইকে হেদায়েত দান করুন।"
+        );
+      }
 
       await message.reply({
-        body:
-          "•—»✨ [ 𝗔𝗹𝗹𝗮𝗵 𝗚𝗜𝗙 ] ✨«—•\n" +
-          "•┄┅════❁🌺❁════┅┄•\n\n" +
-          "✿┼─আল্লাহু আকবর┼─✿\n\n" +
-          "•┄┅════❁🌺❁════┅┄•",
+        body: text,
         attachment: fs.createReadStream(filePath)
       });
 
     } catch (error) {
       console.error("allah command error:", error);
-      await message.reply(
-        "❌ GIF পাঠানো সম্ভব হয়নি। কিছুক্ষণ পরে আবার চেষ্টা করুন।"
-      );
+
+      try {
+        await message.reply(
+          "🕌 𝗔𝗹𝗹𝗮𝗵𝘂 𝗔𝗸𝗯𝗮𝗿 🤲\n\n" +
+          "আল্লাহ আমাদের সবাইকে ঈমান ও হেদায়েত দান করুন।"
+        );
+      } catch (replyError) {
+        console.error(
+          "Fallback reply error:",
+          replyError
+        );
+      }
 
     } finally {
       try {
@@ -70,7 +117,10 @@ module.exports = {
           await fs.remove(filePath);
         }
       } catch (cleanupError) {
-        console.error("allah cleanup error:", cleanupError);
+        console.error(
+          "Cache cleanup error:",
+          cleanupError
+        );
       }
     }
   }
