@@ -106,7 +106,7 @@ module.exports = {
       fs.writeFileSync(outPath, finalBuffer);
 
       const timeString = new Date().toLocaleTimeString("en-US", { hour12: true, timeZone: "Asia/Dhaka" });
-      const da teString = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Dhaka" });
+      const dateString = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Dhaka" });
       const dayString = new Date().toLocaleDateString("en-US", { weekday: "long", timeZone: "Asia/Dhaka" });
 
       const form = {
@@ -121,7 +121,7 @@ module.exports = {
         attachment: fs.createReadStream(outPath)
       };
 
-      message.send(form);
+      await message.send(form);
 
       setTimeout(() => {
         try { fs.unlinkSync(bgPath); } catch (_) {}
@@ -137,4 +137,3 @@ module.exports = {
     }
   }
 };
-    
