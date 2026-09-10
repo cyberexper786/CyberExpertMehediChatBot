@@ -47,9 +47,9 @@ module.exports = {
                 await api.sendMessage(
                     {
                         body:
-`🤡𝐇𝐞𝐫𝐞'𝐬 𝐘𝐨𝐮𝐫 𝐃𝐨𝐰𝐧𝐥𝐨𝐚𝐝𝐞𝐝 𝐕𝐢𝐝𝐞𝐨✨
-𓆩♡𓆪𝐄𝐧𝐣𝐨𝐲 𝐖𝐚𝐭𝐜𝐡𝐢𝐧𝐠.! 🎬
-👑 𝐁𝐨𝐭 𝗢𝐰𝐧𝐞𝐫 ♡𝐌𝙴ʜ𝐄ᴅ𝐈♡`,
+`🤡 𝐇𝐞𝐫𝐞 𝐃𝐨𝐰𝐧𝐥𝐨𝐚𝐝𝐞𝐝 𝐕𝐢𝐝𝐞𝐨 🤡
+  𓆩♡𓆪𝐄𝐧𝐣𝐨𝐲 𝐖𝐚𝐭𝐜𝐡𝐢𝐧𝐠𓆩♡𓆪
+👑 𝐁𝐨𝐭 𝗢𝐰𝐧𝐞𝐫 ♡𝐌𝙴ʜ𝐄ᴅ𝐈♡ 👑`,
                         attachment: fs.createReadStream(filePath)
                     },
                     threadID,
