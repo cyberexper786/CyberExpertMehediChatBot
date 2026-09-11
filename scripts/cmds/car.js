@@ -9,7 +9,7 @@ const mahmud = async () => {
 
 module.exports = {
         config: {
-                name: "",
+                name: "car",
                 aliases: ["carvideo", "carvid", "গাড়ি"],
                 version: "1.7",
                 author: "MahMUD",
@@ -20,7 +20,7 @@ module.exports = {
                         en: "Get a random car edit video",
                         vi: "Lấy một video chỉnh sửa xe hơi ngẫu nhiên"
                 },
-                category: "Media",
+                category: "media",
                 guide: {
                         bn: '   {pn}: একটি র‍্যান্ডম কার ভিডিও দেখতে ব্যবহার করুন',
                         en: '   {pn}: Use to get a random car video',
@@ -32,17 +32,17 @@ module.exports = {
                 bn: {
                         noVideo: "× কোনো ভিডিও খুঁজে পাওয়া যায়নি",
                         success: "𝐇𝐞𝐫𝐞'𝐬 𝐲𝐨𝐮𝐫 𝐂𝐚𝐫 𝐯𝐢𝐝𝐞𝐨 𝐛𝐚𝐛𝐲 <😘",
-                        error: "× সমস্যা হয়েছে: %1। প্রয়োজনে Contact Kakashi।"
+                        error: "× সমস্যা হয়েছে: %1। প্রয়োজনে Contact MahMUD।"
                 },
                 en: {
                         noVideo: "× No videos found",
                         success: "𝐇𝐞𝐫𝐞'𝐬 𝐲𝐨𝐮𝐫 𝐂𝐚𝐫 𝐯𝐢𝐝𝐞𝐨 𝐛𝐚𝐛𝐲 <😘",
-                        error: "× API error: %1. Contact Kakashi for help."
+                        error: "× API error: %1. Contact MahMUD for help."
                 },
                 vi: {
                         noVideo: "× Không tìm thấy video nàn",
                         success: "Video xe hơi của cưng đây <😘",
-                        error: "× Lỗi: %1. Liên hệ Kakashi để hỗ trợ."
+                        error: "× Lỗi: %1. Liên hệ MahMUD để hỗ trợ."
                 }
         },
 
