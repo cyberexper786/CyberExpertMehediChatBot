@@ -222,7 +222,7 @@ module.exports.onStart = async function ({ api, event, args }) {
         body:
           "✅ | Image Edit Complete!\n\n" +
           `📝 Prompt: ${prompt}\n` +
-          "🤖 AI Editor: X-Rahat\n" +
+          "🤖 AI Editor: mehedi\n" +
           "✨ Quality: 2K",
 
         attachment: fs.createReadStream(outputPath)
