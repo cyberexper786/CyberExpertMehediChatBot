@@ -1,66 +1,104 @@
-module.exports.config = {
-  name: "jummah",
-  version: "3.0.0",
-  hasPermssion: 0,
-  credits: "Islamick Cyber Chat",
-  description: "Jummah Mubarak Auto Reply",
-  commandCategory: "events",
-  usages: ".jummah",
-  cooldowns: 5
-};
+module.exports = {
+  config: {
+    name: "jummah",
+    version: "4.0",
+    author: "Islamick Cyber Chat",
+    category: "events",
+    role: 0,
+    description: "Jummah Mubarak Auto Reply"
+  },
 
-module.exports.run = async ({ api, event, Threads }) => {
-  try {
-    const threadID = event.threadID;
+  onStart: async ({ api, event, threadsData, message, args }) => {
+    try {
+      const threadID = event.threadID;
+      const body = String(event.body || "").trim();
+      const action = String(args[0] || "").toLowerCase();
 
-    const threadData = await Threads.getData(threadID);
-    const data = threadData.data || {};
+      // =========================
+      // JUMMAH ON
+      // =========================
+      if (action === "on") {
+        const threadData = await threadsData.get(threadID);
+        const data = threadData.data || {};
 
-    data.jummah = data.jummah === true ? false : true;
+        data.jummah = true;
 
-    await Threads.setData(threadID, { data });
+        await threadsData.set(threadID, {
+          data: data
+        });
 
-    global.data.threadData.set(threadID, data);
+        return message.send(
+          "🕌🌸 JUMMAH MUBARAK 🌸🕌\n\n" +
+          "✅ Jummah Auto Reply চালু হয়েছে!\n\n" +
+          "এখন কেউ \"জুম্মাহ মুবারক\" লিখলে\n" +
+          "Auto Reply যাবে। 🤲"
+        );
+      }
 
-    return api.sendMessage(
-      data.jummah
-        ? "🕌 জুম্মাহ মুবারক Auto-Reply চালু হয়েছে ✅"
-        : "🕌 জুম্মাহ মুবারক Auto-Reply বন্ধ হয়েছে ❌",
-      threadID,
-      event.messageID
-    );
+      // =========================
+      // JUMMAH OFF
+      // =========================
+      if (action === "off") {
+        const threadData = await threadsData.get(threadID);
+        const data = threadData.data || {};
 
-  } catch (error) {
-    console.error("JUMMAH ERROR:", error);
-    return api.sendMessage(
-      "❌ সেটিং পরিবর্তন করা যায়নি!\n\n" +
-      "Threads database error হয়েছে।",
-      event.threadID,
-      event.messageID
-    );
-  }
-};
+        data.jummah = false;
 
-module.exports.handleEvent = async ({ api, event, Threads }) => {
-  try {
-    const text = String(event.body || "").trim();
+        await threadsData.set(threadID, {
+          data: data
+        });
 
-    if (!text.startsWith("জুম্মাহ মুবারক")) return;
+        return message.send(
+          "🕌🌸 JUMMAH MUBARAK 🌸🕌\n\n" +
+          "❌ Jummah Auto Reply বন্ধ হয়েছে!"
+        );
+      }
 
-    const threadData = await Threads.getData(event.threadID);
-    const data = threadData.data || {};
+      // =========================
+      // STATUS
+      // =========================
+      if (action === "status") {
+        const threadData = await threadsData.get(threadID);
+        const data = threadData.data || {};
 
-    // OFF থাকলে reply করবে না
-    if (data.jummah !== true) return;
+        return message.send(
+          data.jummah === true
+            ? "🕌 Jummah Auto Reply: ✅ ON"
+            : "🕌 Jummah Auto Reply: ❌ OFF"
+        );
+      }
 
-    return api.sendMessage(
-      "🕌🌸 জুম্মাহ মুবারক 🌸🕌\n\n" +
-      "আসসালামু আলাইকুম 🩷\n" +
-      "আল্লাহ আমাদের সকলের দোয়া কবুল করুন। 🤲",
-      event.threadID
-    );
+      // =========================
+      // AUTO REPLY
+      // =========================
+      if (
+        body !== "জুম্মাহ মুবারক" &&
+        body !== "জুম্মা মুবারক"
+      ) {
+        return;
+      }
 
-  } catch (error) {
-    console.error("JUMMAH EVENT ERROR:", error);
+      const threadData = await threadsData.get(threadID);
+      const data = threadData.data || {};
+
+      // OFF থাকলে reply করবে না
+      if (data.jummah !== true) return;
+
+      return message.send(
+        "🕌🌸 𝗝𝗨𝗠𝗠𝗔𝗛 𝗠𝗨𝗕𝗔𝗥𝗔𝗞 🌸🕌\n\n" +
+        "🤍 আসসালামু আলাইকুম 🤍\n\n" +
+        "🤲 আল্লাহ আমাদের সকলের দোয়া কবুল করুন।\n" +
+        "🕋 আল্লাহ আমাদের সবাইকে হেদায়েত দান করুন।\n" +
+        "🌸 জুম্মাহর দিনটি বরকতময় হোক।"
+      );
+
+    } catch (error) {
+      console.error("JUMMAH ERROR:", error);
+
+      return message.send(
+        "❌ Jummah command-এ সমস্যা হয়েছে!\n\n" +
+        "⚠️ " + error.message
+      );
+    }
   }
 };
