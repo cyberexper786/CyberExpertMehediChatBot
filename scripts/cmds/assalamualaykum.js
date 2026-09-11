@@ -1,4 +1,4 @@
-.Cmd install Assalamualaykum.js module.exports = {
+module.exports = {
   config: {
     name: "assalamualaykum",
     version: "2.1.0",
