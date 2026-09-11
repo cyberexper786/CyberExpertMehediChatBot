@@ -2,77 +2,166 @@ const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
 
-module.exports.config = {
-  name: "randommix",
-  version: "1.0.0",
-  author: "Islamick Cyber Chat (fixed & converted by Claude)",
-  countDown: 30,
-  role: 0,
-  description: "Random love story / mixed video",
-  category: "video",
-  guide: {
-    en: "{pn} : send a random mixed video"
-  }
-};
-
-module.exports.run = async function ({ api, event }) {
-  const { threadID, messageID } = event;
-
-  const endpoints = [
-    "status", "sad", "baby", "love", "ff", "shairi", "humaiyun",
-    "islam", "anime", "short", "event", "prefix", "cpl", "time",
-    "lofi", "happy"
-  ];
-  const base = "https://all-api-ius8.onrender.com/video/";
-  const chosen = endpoints[Math.floor(Math.random() * endpoints.length)];
-  const apiUrl = base + chosen;
-
-  // Unique temp filename per request avoids collisions if two users
-  // trigger the command at nearly the same time
-  const cacheDir = path.join(__dirname, "cache");
-  const filePath = path.join(cacheDir, `randommix_${event.senderID}_${Date.now()}.mp4`);
-
-  try {
-    await fs.ensureDir(cacheDir);
-
-    const apiRes = await axios.get(apiUrl, { timeout: 10000 });
-    const videoUrl = apiRes.data && apiRes.data.data;
-    const count = apiRes.data && apiRes.data.count;
-    const caption = apiRes.data && apiRes.data.shaon;
-
-    if (!videoUrl) {
-      return api.sendMessage("দুঃখিত, এই মুহূর্তে ভিডিও পাওয়া যায়নি। একটু পর আবার চেষ্টা করো।", threadID, messageID);
+module.exports = {
+  config: {
+    name: "randommix",
+    version: "2.0",
+    author: "Islamick Cyber Chat",
+    category: "video",
+    role: 0,
+    description: "Random mixed video",
+    guide: {
+      en: "{pn}"
     }
+  },
 
-    // Download the video
-    const videoRes = await axios({
-      url: videoUrl,
-      method: "GET",
-      responseType: "stream",
-      timeout: 20000
-    });
+  onStart: async ({ api, event, message }) => {
+    const threadID = event.threadID;
+    const messageID = event.messageID;
 
-    const writer = fs.createWriteStream(filePath);
-    videoRes.data.pipe(writer);
+    const endpoints = [
+      "status",
+      "sad",
+      "baby",
+      "love",
+      "ff",
+      "shairi",
+      "humaiyun",
+      "islam",
+      "anime",
+      "short",
+      "event",
+      "prefix",
+      "cpl",
+      "time",
+      "lofi",
+      "happy"
+    ];
 
-    await new Promise((resolve, reject) => {
-      writer.on("finish", resolve);
-      writer.on("error", reject);
-    });
+    const baseURL =
+      "https://all-api-ius8.onrender.com/video/";
 
-    await api.sendMessage(
-      {
-        body: `𝐒𝐏𝐀𝐘𝐒𝐇𝐄𝐀𝐋 𝐑𝐀𝐍𝐃𝐎𝐌 𝐌𝐈𝐗 𝐕𝐈𝐃𝐄𝐎...🎬\n\n${caption || ""}\n𝚃𝙾𝚃𝙰𝙻 𝚅𝙸𝙳𝙴𝙾: ${count || "N/A"}\n\n｢𝐈𝐒𝐋𝐀𝐌𝐈𝐂𝐊 𝐂𝐘𝐁𝐄𝐑 𝐂𝐇𝐀𝐓｣`,
+    let filePath = null;
+
+    try {
+      // Random category
+      const chosen =
+        endpoints[Math.floor(Math.random() * endpoints.length)];
+
+      const apiURL = baseURL + chosen;
+
+      await message.send(
+        "🎬 | Random Mix Video খোঁজা হচ্ছে...\n⏳ Please wait..."
+      );
+
+      // API থেকে video information
+      const apiResponse = await axios.get(apiURL, {
+        timeout: 30000
+      });
+
+      const result = apiResponse.data || {};
+
+      const videoURL = result.data;
+      const totalVideo = result.count || "N/A";
+      const caption = result.shaon || "";
+
+      if (!videoURL) {
+        return message.send(
+          "❌ | এই মুহূর্তে কোনো ভিডিও পাওয়া যায়নি।\n\n" +
+          "🔄 একটু পরে আবার চেষ্টা করুন।"
+        );
+      }
+
+      // Cache directory
+      const cacheDir = path.join(__dirname, "cache");
+      await fs.ensureDir(cacheDir);
+
+      // Unique filename
+      filePath = path.join(
+        cacheDir,
+        `randommix_${Date.now()}_${event.senderID}.mp4`
+      );
+
+      // Video download
+      const videoResponse = await axios.get(videoURL, {
+        responseType: "stream",
+        timeout: 60000,
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity
+      });
+
+      const writer = fs.createWriteStream(filePath);
+
+      videoResponse.data.pipe(writer);
+
+      await new Promise((resolve, reject) => {
+        writer.on("finish", resolve);
+        writer.on("error", reject);
+
+        videoResponse.data.on("error", reject);
+      });
+
+      // File exists check
+      if (!(await fs.pathExists(filePath))) {
+        throw new Error("Video file তৈরি করা যায়নি।");
+      }
+
+      // Send video
+      await message.send({
+        body:
+          "🎬 𝗥𝗔𝗡𝗗𝗢𝗠 𝗠𝗜𝗫 𝗩𝗜𝗗𝗘𝗢\n\n" +
+          (caption ? caption + "\n\n" : "") +
+          `🎞️ Total Video: ${totalVideo}\n` +
+          `📂 Category: ${chosen}\n\n` +
+          "╭──────────────╮\n" +
+          "   𝐈𝐒𝐋𝐀𝐌𝐈𝐂𝐊 𝐂𝐘𝐁𝐄𝐑 𝐂𝐇𝐀𝐓\n" +
+          "╰──────────────╯",
+
         attachment: fs.createReadStream(filePath)
-      },
-      threadID,
-      messageID
-    );
-  } catch (err) {
-    console.error("[randommix.js] error:", err.message);
-    api.sendMessage("দুঃখিত, ভিডিও লোড করতে সমস্যা হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করো।", threadID, messageID);
-  } finally {
-    // Always clean up, even if sending failed
-    fs.unlink(filePath, () => {});
+      });
+
+    } catch (error) {
+      console.error(
+        "[RANDOMMIX ERROR]",
+        error
+      );
+
+      let errorText =
+        "❌ | Video load করতে সমস্যা হয়েছে।";
+
+      if (error.code === "ECONNABORTED") {
+        errorText +=
+          "\n\n⏱️ API response পেতে অনেক সময় লাগছে।";
+      } else if (error.response) {
+        errorText +=
+          `\n\n⚠️ API Status: ${error.response.status}`;
+      } else if (error.message) {
+        errorText +=
+          `\n\n⚠️ ${error.message}`;
+      }
+
+      return api.sendMessage(
+        errorText,
+        threadID,
+        messageID
+      );
+
+    } finally {
+      // কিছু সময় পরে cache delete
+      if (filePath) {
+        setTimeout(async () => {
+          try {
+            if (await fs.pathExists(filePath)) {
+              await fs.remove(filePath);
+            }
+          } catch (cleanupError) {
+            console.error(
+              "[RANDOMMIX CLEANUP ERROR]",
+              cleanupError.message
+            );
+          }
+        }, 15000);
+      }
+    }
   }
 };
