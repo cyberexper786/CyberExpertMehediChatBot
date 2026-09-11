@@ -1,84 +1,150 @@
-module.exports.config = {
-  name: "hi",
-  version: "1.1.0",
-  hasPermssion: 0,
-  credits: "MrTomXxX (fixed & converted by Claude)",
-  description: "Auto reply when someone greets in the thread",
-  commandCategory: "noprefix",
-  usages: "hi/on/off",
-  cooldowns: 0,
-  dependencies: {}
-};
-
-module.exports.langs = {
-  vi: {
-    on: "Bật",
-    off: "Tắt",
-    successText: "chế độ chào hỏi %1 thành công"
-  },
-  en: {
-    on: "on",
-    off: "off",
-    successText: "greeting mode turned %1 successfully"
-  }
-};
-
-// Toggle command: user types the prefix command to turn this on/off per thread
-module.exports.run = async function ({ api, event, Threads, getLang }) {
-  const { threadID, messageID } = event;
-  const threadData = await Threads.getData(threadID);
-  const data = threadData.data || {};
-
-  data["hi"] = !(data["hi"] === undefined ? true : data["hi"]);
-
-  await Threads.setData(threadID, { data });
-
-  const state = data["hi"] === false ? getLang("off") : getLang("on");
-  return api.sendMessage(getLang("successText", state), threadID, messageID);
-};
-
-// Passive listener: fires on every message, checks for a greeting
-module.exports.handleEvent = async ({ event, api, Users, Threads }) => {
-  try {
-    const { threadID, messageID, body, senderID } = event;
-    if (!body || typeof body !== "string") return;
-    if (senderID == api.getCurrentUserID()) return;
-
-    const threadData = await Threads.getData(threadID);
-    const data = threadData.data || {};
-    if (data["hi"] === false) return; // feature turned off in this thread
-
-    const greetings = ["hi", "hello", "low", "hey", "loe", "hii", "hai", "yow", "yo", "hi po", "hoy", "uy"];
-    const normalized = body.trim().toLowerCase();
-    if (!greetings.includes(normalized)) return;
-
-    const name = await Users.getNameUser(senderID);
-
-    let attachment;
-    try {
-      const axios = global.nodemodule["axios"];
-      const res = await axios.get("https://apilucy.khoahoang3.repl.co", { timeout: 5000 });
-      const imageUrl = res && res.data && res.data.data;
-      if (imageUrl) {
-        const imgRes = await axios({ url: imageUrl, method: "GET", responseType: "stream", timeout: 8000 });
-        attachment = imgRes.data;
-      }
-    } catch (apiErr) {
-      // API is down or slow — fall back to a text-only reply instead of crashing
-      attachment = undefined;
+module.exports = {
+  config: {
+    name: "hi",
+    version: "2.1.0",
+    author: "Islamick Cyber Chat",
+    role: 0,
+    description: "Auto greeting reply",
+    category: "events",
+    guide: {
+      en: "{pn} on | off | status"
     }
+  },
 
-    const msg = {
-      body: `Hi ${name}, have a nice day`,
-      ...(attachment ? { attachment } : {})
-    };
+  onStart: async ({ api, event, args, threadsData, message }) => {
+    try {
+      const threadID = event.threadID;
+      const action = String(args[0] || "").toLowerCase();
 
-    api.sendMessage(msg, threadID, (err) => {
-      if (!err) {
-        api.setMessageReaction("❤️", messageID, () => {}, true);
+      if (!threadID) {
+        return message.send("❌ Thread ID পাওয়া যায়নি!");
       }
-    }, messageID);
-  } catch (err) {
-    console.error("[hi.js] handleEvent error:", err.message);
+
+      const threadData = await threadsData.get(threadID);
+      const data = threadData.data || {};
+
+      if (action === "on") {
+        data.hi = true;
+
+        await threadsData.set(threadID, {
+          data
+        });
+
+        return message.send(
+          "👋 𝗚𝗥𝗘𝗘𝗧𝗜𝗡𝗚 𝗠𝗢𝗗𝗘\n\n" +
+          "✅ Auto Greeting চালু হয়েছে!\n\n" +
+          "এখন কেউ Hi / Hello / Hey লিখলে Bot reply করবে।"
+        );
+      }
+
+      if (action === "off") {
+        data.hi = false;
+
+        await threadsData.set(threadID, {
+          data
+        });
+
+        return message.send(
+          "👋 𝗚𝗥𝗘𝗘𝗧𝗜𝗡𝗚 𝗠𝗢𝗗𝗘\n\n" +
+          "❌ Auto Greeting বন্ধ হয়েছে।"
+        );
+      }
+
+      if (action === "status") {
+        return message.send(
+          data.hi === false
+            ? "👋 Greeting Mode: ❌ OFF"
+            : "👋 Greeting Mode: ✅ ON"
+        );
+      }
+
+      return message.send(
+        "👋 𝗛𝗜 𝗠𝗢𝗗𝗘\n\n" +
+        "➤ /hi on — চালু\n" +
+        "➤ /hi off — বন্ধ\n" +
+        "➤ /hi status — অবস্থা"
+      );
+
+    } catch (error) {
+      console.error("[HI ERROR]", error);
+
+      return message.send(
+        "❌ Hi command-এ সমস্যা হয়েছে!\n\n" +
+        "⚠️ " + error.message
+      );
+    }
+  },
+
+  onChat: async ({ api, event, message, threadsData, usersData }) => {
+    try {
+      const threadID = event.threadID;
+      const senderID = event.senderID;
+
+      if (!threadID || !event.body) return;
+
+      if (
+        global.GoatBot &&
+        senderID == global.GoatBot.botID
+      ) {
+        return;
+      }
+
+      const text = String(event.body)
+        .trim()
+        .toLowerCase();
+
+      const greetings = [
+        "hi",
+        "hello",
+        "hey",
+        "hii",
+        "hiii",
+        "hai",
+        "helo",
+        "hlo",
+        "yo",
+        "yow",
+        "hoy",
+        "uy",
+        "hi po"
+      ];
+
+      if (!greetings.includes(text)) return;
+
+      const threadData = await threadsData.get(threadID);
+      const data = threadData.data || {};
+
+      if (data.hi === false) return;
+
+      let name = "Friend";
+
+      try {
+        name = await usersData.getName(senderID);
+      } catch (e) {
+        name = "Friend";
+      }
+
+      const replies = [
+        `👋 Hi ${name}! Have a nice day 😊`,
+        `🌸 Hello ${name}! How are you?`,
+        `💗 Hey ${name}! Welcome 😊`,
+        `✨ Hi ${name}! Hope you're doing well.`
+      ];
+
+      const reply =
+        replies[Math.floor(Math.random() * replies.length)];
+
+      await message.send(reply);
+
+      try {
+        await message.reaction("❤️", event.messageID);
+      } catch (e) {}
+
+    } catch (error) {
+      console.error(
+        "[HI ONCHAT ERROR]",
+        error.message
+      );
+    }
   }
 };
